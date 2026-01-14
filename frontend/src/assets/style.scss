@@ -1,0 +1,112 @@
+@use "themes/variables" as *;
+@use "themes/mixins" as *;
+@import "tailwindcss";
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: $dark;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: $white;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: $primary;
+  border: 1px solid $primary;
+  color: $white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.btn-outline-primary {
+  border: 1px solid $primary;
+  border-radius: 8px;
+  color: $white;
+  padding: 8px 15px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.login-page {
+  width: 100%;
+  height: 100vh;
+  background-color: $dark;
+  @include flex-center;
+
+  .login-card {
+    width: 600px;
+    border: 1px solid $border-color;
+    border-radius: 15px;
+    flex-direction: column;
+    @include flex-center;
+    padding: 40px 80px;
+  }
+}
+
+.register-page{
+  width: 100%;
+  height: 100vh;
+  @include flex-center;
+
+  .register-card {
+    width: 800px;
+    border: 1px solid $border-color;
+    border-radius: 15px;
+    flex-direction: column;
+    @include flex-center;
+    padding: 20px 40px;
+  }
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.theme-input {
+  margin-bottom: 20px;
+
+  .form-label {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .form-control {
+    outline: none;
+    background: transparent;
+    border: 1px solid $border-color;
+    border-radius: 0.5rem;
+    color: #fff;
+    padding: 15px;
+    width: 100%;
+    font-size: 1rem;
+
+    &:focus {
+      border: 1px solid $primary;
+    }
+
+    &::placeholder {
+      color: #bbb;
+      font-size: 1rem;
+    }
+  }
+}

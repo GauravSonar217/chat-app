@@ -1,0 +1,23 @@
+@use "variables" as *;
+
+// Flex center mixin
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Card shadow mixin
+@mixin card-shadow {
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+// Border radius mixin
+@mixin rounded($radius: 1rem) {
+  border-radius: $radius;
+}
+
+// Transition mixin
+@mixin transition($props: all, $duration: 0.3s, $timing: ease) {
+  transition: $props $duration $timing;
+}
