@@ -133,10 +133,8 @@ chat-app/
 
 ## 👨‍💻 Author
 
-```md
-**Gaurav Sonar**
-MERN Stack Developer
+**Gaurav Sonar**  
+*MERN Stack Developer*
 
-```bash
-GitHub: https://github.com/your-username
-LinkedIn: https://linkedin.com/in/your-profile
+- GitHub: https://github.com/GauravSonar217  
+- LinkedIn: https://linkedin.com/in/your-profile
