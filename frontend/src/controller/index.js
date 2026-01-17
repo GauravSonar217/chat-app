@@ -1,18 +1,14 @@
 import axios from "axios";
-import baseUrl from process.env.REACT_APP_BACKEND_URL;
-import { getToken } from "../utils/storage";
+import.meta.env.VITE_BACKEND_URL;
 
-const apiClient = axios.create({
-    baseURL: baseUrl,
-    headers: {
-        "Content-Type": "application/json",
-    },
+export const apiClient = axios.create({
+    baseURL: `${import.meta.env.VITE_BACKEND_URL}/api`,
+    timeout: 120000,
 });
 
-// Add a request interceptor to include the token in headers
 apiClient.interceptors.request.use(
     (config) => {
-        const token = getToken();
+        const token = localStorage.getItem("token");
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -23,4 +19,15 @@ apiClient.interceptors.request.use(
     }
 );
 
-export default apiClient;
+
+export const userLogin = (data) => {
+    return apiClient.post("/user/auth/login", data);
+}
+
+export const register = (data) => {
+    return apiClient.post("/user/auth/register", data);
+}
+
+export const userLogout = () => {
+    return apiClient.post("/user/auth/logout");
+}

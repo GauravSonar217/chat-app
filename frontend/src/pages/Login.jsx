@@ -2,22 +2,42 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "react-bootstrap";
 import CustomFormInput from "../component/CustomFormInput";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { encryptAndStoreLocal, requestHandler } from "../helper";
+import { userLogin } from "../controller";
+import { PulseLoader } from "react-spinners";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm({ mode: "onChange" });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
-    // Call your login API here with data.email and data.password
-    // Example: loginUser(data)
-    toast.success("Login successful!");
-    console.log("Login Data:", data);
+    await requestHandler(
+      async () => await userLogin(data),
+      setLoading,
+      (res) => {
+        toast.success(res.message);
+        reset();
+        encryptAndStoreLocal("token", { token: res.token });
+        const userData = {
+          userId: res.user._id,
+          username: res.user.username,
+          email: res.user.email,
+          role: res.user.role,
+        };
+        encryptAndStoreLocal("userData", { userData: userData });
+        navigate("/dashboard");
+      },
+      (err) => {}
+    );
   };
 
   return (
@@ -57,8 +77,12 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="w-100 btn-primary">
-            Login
+          <button
+            type="submit"
+            className="w-100 btn-primary"
+            disabled={loading}
+          >
+            {loading ? <PulseLoader size={10} color="#fff" /> : "Login"}
           </button>
           <div className="mt-3 text-center">
             <p>

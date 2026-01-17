@@ -110,7 +110,7 @@ chat-app/
 
 ### 1️⃣ Clone the repository
 
-- git clone https://github.com/your-username/chat-app.git
+- git clone https://github.com/GauravSonar217/chat-app.git
 - cd chat-app
 
 ### 2️⃣ Run Backend
@@ -137,4 +137,4 @@ chat-app/
 *MERN Stack Developer*
 
 - GitHub: https://github.com/GauravSonar217  
-- LinkedIn: https://linkedin.com/in/your-profile
+- LinkedIn: https://linkedin.com/in/gauravsonar217

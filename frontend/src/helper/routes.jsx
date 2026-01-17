@@ -19,7 +19,7 @@ const routeWrapper = (comp, isProtected = true) => {
 
  const routes = [
   {
-    path: "/login",
+    path: "/",
     element: routeWrapper(<Login />, false),
   },
   {

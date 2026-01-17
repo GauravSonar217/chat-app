@@ -1,18 +1,59 @@
+import { toast } from "react-toastify";
+import CryptoJS from "crypto-js";
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY ;
 
-const requestHandler = async (api, setLoading, onSuccess, onError, showToast = true) => {
+export const requestHandler = async (api, setLoading, onSuccess, onError, showToast = true) => {
     try {
-        setLoading(true);
-        const response = await api();
+        setLoading?.(true);
+        const res = await api();
+        const { data } = res;
 
-        const { data } = response;
-        if (data.success) {
+        if (data.success && res.statusText === "OK") {
             onSuccess(data);
         }
 
     } catch (error) {
-        setLoading(false);
-        onError(error);
+        if ([401, 403].includes(error.response?.status)) {
+            localStorage.removeItem("token"),
+            window.location.replace("/");
+        }
+        if (showToast) {
+            toast.error(error.response?.data?.message);
+        }
+
+        onError?.(error);
     } finally {
-        setLoading(false);
+        setLoading?.(false);
     }
 }
+
+
+export const encryptAndStoreLocal = (key, value) => {
+  try {
+    const stringValue = JSON.stringify(value);
+
+    const encryptedValue = CryptoJS.AES.encrypt(
+      stringValue,
+      SECRET_KEY
+    ).toString();
+
+    localStorage.setItem(key, encryptedValue);
+  } catch (error) {
+    console.error("Encryption error:", error);
+  }
+};
+
+export const decryptAndGetLocal = (key) => {
+  try {
+    const encryptedValue = localStorage.getItem(key);
+    if (!encryptedValue) return null;
+
+    const bytes = CryptoJS.AES.decrypt(encryptedValue, SECRET_KEY);
+    const decryptedValue = bytes.toString(CryptoJS.enc.Utf8);
+
+    return decryptedValue ? JSON.parse(decryptedValue) : null;
+  } catch (error) {
+    console.error("Decryption error:", error);
+    return null;
+  }
+};  

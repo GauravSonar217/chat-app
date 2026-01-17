@@ -1,5 +1,4 @@
 
-
 const User = require('../model/user.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -52,35 +51,6 @@ exports.registerUser = async (req, res) => {
 			user: userObj,
 		});
 
-		// Email verification controller
-		exports.verifyEmail = async (req, res) => {
-			try {
-				const { email, otp } = req.body;
-				const user = await User.findOne({ email });
-				if (!user) {
-					return res.status(400).json({ message: 'Invalid email or OTP.' });
-				}
-				if (user.emailVerified) {
-					return res.status(400).json({ message: 'Email already verified.' });
-				}
-				if (
-					!user.emailVerificationOTP ||
-					user.emailVerificationOTP !== otp ||
-					!user.emailVerificationOTPExpires ||
-					user.emailVerificationOTPExpires < new Date()
-				) {
-					return res.status(400).json({ message: 'Invalid or expired OTP.' });
-				}
-				user.emailVerified = true;
-				user.emailVerificationOTP = undefined;
-				user.emailVerificationOTPExpires = undefined;
-				await user.save();
-				res.status(200).json({ message: 'Email verified successfully.' });
-			} catch (error) {
-				console.error('Email verification error:', error);
-				res.status(500).json({ message: 'Server error. Please try again later.' });
-			}
-		};
 	} catch (error) {
 		console.error('Registration error:', error);
 		res.status(500).json({ message: 'Server error. Please try again later.' });
@@ -93,12 +63,12 @@ exports.loginUser = async (req, res) => {
 
 		const user = await User.findOne({ email });
 		if (!user) {
-			return res.status(401).json({ message: 'Invalid email or password.' });
+			return res.status(401).json({ message: 'Invalid email or password' });
 		}
 
 		const isMatch = await bcrypt.compare(password, user.password);
 		if (!isMatch) {
-			return res.status(401).json({ message: 'Invalid email or password.' });
+			return res.status(401).json({ message: 'Invalid email or password' });
 		}
 
 		const token = jwt.sign(
@@ -111,12 +81,55 @@ exports.loginUser = async (req, res) => {
 		delete userObj.password;
 
 		res.status(200).json({
-			message: 'Login successful.',
+			success: true,
 			token,
+			message: 'User logged in successfully',
 			user: userObj,
 		});
 	} catch (error) {
 		console.error('Login error:', error);
+		res.status(500).json({ message: 'Server error. Please try again later' });
+	}
+};
+
+exports.logoutUser = async (req, res) => {
+	try {
+		res.status(200).json({
+			success: true,
+			message: 'User logged out successfully'
+		});
+
+	} catch (error) {
+		console.error('Logout error:', error);
+		res.status(500).json({ message: 'Server error. Please try again later.' });
+	}
+};
+
+exports.verifyEmail = async (req, res) => {
+	try {
+		const { email, otp } = req.body;
+		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(400).json({ message: 'Invalid email or OTP.' });
+		}
+		if (user.emailVerified) {
+			return res.status(400).json({ message: 'Email already verified.' });
+		}
+		if (
+			!user.emailVerificationOTP ||
+			user.emailVerificationOTP !== otp ||
+			!user.emailVerificationOTPExpires ||
+			user.emailVerificationOTPExpires < new Date()
+		) {
+			return res.status(400).json({ message: 'Invalid or expired OTP.' });
+		}
+		user.emailVerified = true;
+		user.emailVerificationOTP = undefined;
+		user.emailVerificationOTPExpires = undefined;
+		await user.save();
+		res.status(200).json({ message: 'Email verified successfully.' });
+	} catch (error) {
+		console.error('Email verification error:', error);
 		res.status(500).json({ message: 'Server error. Please try again later.' });
 	}
 };
