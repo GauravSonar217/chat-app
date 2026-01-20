@@ -15,9 +15,12 @@ exports.registerUser = async (req, res) => {
 			return res.status(409).json({ message: 'User with this email or username already exists.' });
 		}
 
-		// Generate OTP for email verification
-		const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
-		const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+		const hashedOtp = crypto
+			.createHash('sha256')
+			.update(otp)
+			.digest('hex');
 
 		const newUser = new User({
 			username,
@@ -26,27 +29,32 @@ exports.registerUser = async (req, res) => {
 			email,
 			password,
 			phoneNumber,
-			emailVerificationOTP: otp,
+			emailVerificationOTP: hashedOtp,
 			emailVerificationOTPExpires: otpExpires,
 			emailVerified: false,
 		});
 
 		await newUser.save();
 
-		// Send OTP email
-		await sendEmail({
-			to: newUser.email,
-			subject: 'Verify your email',
-			text: `Your verification code is: ${otp}`,
-			html: `<p>Your verification code is: <b>${otp}</b></p>`
-		});
+		try {
+			await sendEmail({
+				to: email,
+				subject: 'Verify your email',
+				text: `Your verification code is: ${otp}`,
+				html: `<p>Your verification code is: <b>${otp}</b></p>`
+			});
+		} catch (err) {
+			console.error("Email failed:", err.message);
+		}
 
 		const userObj = newUser.toObject();
 		delete userObj.password;
 		delete userObj.emailVerificationOTP;
 		delete userObj.emailVerificationOTPExpires;
+		delete userObj.__v;
 
 		res.status(201).json({
+			success: true,
 			message: 'User registered successfully. Please verify your email.',
 			user: userObj,
 		});
@@ -63,12 +71,18 @@ exports.loginUser = async (req, res) => {
 
 		const user = await User.findOne({ email });
 		if (!user) {
-			return res.status(401).json({ message: 'Invalid email or password' });
+			return res.status(401).json({
+				success: false,
+				message: "Invalid email or password",
+			});
 		}
 
 		const isMatch = await bcrypt.compare(password, user.password);
 		if (!isMatch) {
-			return res.status(401).json({ message: 'Invalid email or password' });
+			return res.status(401).json({
+				success: false,
+				message: "Invalid email or password",
+			});
 		}
 
 		const token = jwt.sign(
@@ -121,13 +135,17 @@ exports.verifyEmail = async (req, res) => {
 			!user.emailVerificationOTPExpires ||
 			user.emailVerificationOTPExpires < new Date()
 		) {
-			return res.status(400).json({ message: 'Invalid or expired OTP.' });
+			return res.status(404).json({ message: 'Invalid or expired OTP.' });
 		}
 		user.emailVerified = true;
 		user.emailVerificationOTP = undefined;
 		user.emailVerificationOTPExpires = undefined;
 		await user.save();
-		res.status(200).json({ message: 'Email verified successfully.' });
+		return res.status(200).json({
+			success: true,
+			message: 'Email verified successfully'
+		});
+
 	} catch (error) {
 		console.error('Email verification error:', error);
 		res.status(500).json({ message: 'Server error. Please try again later.' });

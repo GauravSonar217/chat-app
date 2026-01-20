@@ -24,7 +24,7 @@ export const userLogin = (data) => {
     return apiClient.post("/user/auth/login", data);
 }
 
-export const register = (data) => {
+export const userRegister = (data) => {
     return apiClient.post("/user/auth/register", data);
 }
 

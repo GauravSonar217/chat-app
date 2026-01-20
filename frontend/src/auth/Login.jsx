@@ -19,6 +19,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const handleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
   const onSubmit = async (data) => {
     await requestHandler(
       async () => await userLogin(data),
@@ -36,7 +40,7 @@ const Login = () => {
         encryptAndStoreLocal("userData", { userData: userData });
         navigate("/dashboard");
       },
-      (err) => {}
+      (err) => {},
     );
   };
 
@@ -60,21 +64,30 @@ const Login = () => {
               })}
               error={errors.email?.message}
             />
-
-            <CustomFormInput
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              name="password"
-              {...register("password", {
-                required: "Password is required",
-                minLength: {
-                  value: 8,
-                  message: "Password must be at least 8 characters",
-                },
-              })}
-              error={errors.password?.message}
-            />
+            <div className="passwordToggleCont">
+              <CustomFormInput
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                name="password"
+                className=""
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 8,
+                    message: "Password must be at least 8 characters",
+                  },
+                })}
+                error={errors.password?.message}
+              />
+              <div className="toggle-password" onClick={handleShowPassword}>
+                {showPassword ? (
+                  <img src="/images/svg/eye-off-line.svg" alt="" width={20} />
+                ) : (
+                  <img src="/images/svg/eye-line.svg" alt="" width={20} />
+                )}
+              </div>
+            </div>
           </div>
 
           <button

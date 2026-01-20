@@ -1,30 +1,30 @@
 import { toast } from "react-toastify";
 import CryptoJS from "crypto-js";
-const SECRET_KEY = import.meta.env.VITE_SECRET_KEY ;
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
 export const requestHandler = async (api, setLoading, onSuccess, onError, showToast = true) => {
-    try {
-        setLoading?.(true);
-        const res = await api();
-        const { data } = res;
+  try {
+    setLoading?.(true);
+    const res = await api();
+    const { data } = res;
 
-        if (data.success && res.statusText === "OK") {
-            onSuccess(data);
-        }
-
-    } catch (error) {
-        if ([401, 403].includes(error.response?.status)) {
-            localStorage.removeItem("token"),
-            window.location.replace("/");
-        }
-        if (showToast) {
-            toast.error(error.response?.data?.message);
-        }
-
-        onError?.(error);
-    } finally {
-        setLoading?.(false);
+    if (data.success) {
+      onSuccess(data);
     }
+
+  } catch (error) {
+    if ([401, 403].includes(error.response?.status)) {
+      localStorage.removeItem("token"),
+      window.location.replace("/");
+    }
+    if (showToast) {
+      toast.error(error.response?.data?.message);
+    }
+
+    onError?.(error);
+  } finally {
+    setLoading?.(false);
+  }
 }
 
 

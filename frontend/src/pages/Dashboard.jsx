@@ -3,9 +3,12 @@ import { requestHandler } from "../helper";
 import { userLogout } from "../controller";
 import { toast } from "react-toastify";
 import { PulseLoader } from "react-spinners";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
   const handleLogout = async () => {
     await requestHandler(
       async () => await userLogout(),
@@ -13,9 +16,9 @@ const Dashboard = () => {
       (res) => {
         toast.success(res.message);
         localStorage.removeItem("token");
-        window.location.replace("/");
+        navigate("/");
       },
-      (err) => {}
+      (err) => {},
     );
   };
   return (
