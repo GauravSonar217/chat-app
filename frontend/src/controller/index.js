@@ -31,3 +31,7 @@ export const userRegister = (data) => {
 export const userLogout = () => {
     return apiClient.post("/user/auth/logout");
 }
+
+export const verifyEmail = (data) => {
+    return apiClient.post("/user/auth/verify-email", data);
+}

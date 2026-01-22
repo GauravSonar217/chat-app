@@ -1,23 +1,45 @@
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { decryptAndGetLocal, requestHandler } from "../helper";
-// import { verifyEmail } from "../controller"; // API function
+import { verifyEmail } from "../controller";
+import { PulseLoader } from "react-spinners";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [isExpired, setIsExpired] = useState(false);
 
   const inputsRef = useRef([]);
   const navigate = useNavigate();
-  const location = useLocation();
   const email = decryptAndGetLocal("email")?.email;
 
   useEffect(() => {
+    inputsRef.current[0]?.focus();
     if (!email) {
       navigate("/register");
     }
   }, [email, navigate]);
+
+  useEffect(() => {
+    if (timeLeft === 0) {
+      setIsExpired(true);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = (seconds) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
 
   const handleChange = (value, index) => {
     if (!/^\d?$/.test(value)) return;
@@ -60,9 +82,11 @@ const VerifyOtp = () => {
     await requestHandler(
       () => verifyEmail({ email, otp: otpValue }),
       setLoading,
-      () => {
-        toast.success("Email verified successfully");
-        navigate("/login");
+      (res) => {
+        toast.success(res.message);
+        localStorage.removeItem("email");
+        setOtp(Array(6).fill(""));
+        navigate("/");
       },
       () => {},
     );
@@ -75,7 +99,7 @@ const VerifyOtp = () => {
     >
       <form
         onSubmit={handleSubmit}
-        className="p-5 rounded shadow-md border border-3 d-flex flex-column align-items-center"
+        className="p-5 rounded shadow-md border border-1 d-flex flex-column align-items-center"
       >
         <h2 className="text-xl font-semibold text-center mb-2">
           Verify Your Email
@@ -98,17 +122,31 @@ const VerifyOtp = () => {
               onChange={(e) => handleChange(e.target.value, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
               className="text-center p-3 border rounded"
-              style={{fontSize: "30px", width: "60px", height: "60px"}}
+              style={{ fontSize: "30px", width: "60px", height: "60px" }}
             />
           ))}
         </div>
+        {!isExpired ? (
+          <h5 className="text-sm text-gray-500 mt-2">
+            OTP expires in <b>{formatTime(timeLeft)}</b>
+          </h5>
+        ) : (
+          <button
+            type="button"
+            disabled={loading}
+            // onClick={handleResendOtp}
+            className="mt-3 text-blue-600 hover:underline text-sm"
+          >
+            Resend OTP
+          </button>
+        )}
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full btn border bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+          disabled={loading || isExpired}
+          className="w-full btn btn-primary bg-blue-600 text-white mt-4 py-2 px-5 rounded hover:bg-blue-700"
         >
-          {loading ? "Verifying..." : "Verify OTP"}
+          {loading ? <PulseLoader size={10} color="#fff" /> : "Verify OTP"}
         </button>
       </form>
     </section>

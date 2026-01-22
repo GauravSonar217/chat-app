@@ -22,13 +22,11 @@ const Register = () => {
   } = useForm({ mode: "onChange" });
 
   const onSubmit = async (data) => {
-    const { userName, firstName, lastName, email, phoneNumber, password } =
-      data;
+    const { userName, fullName, email, phoneNumber, password } = data;
 
     const registrationData = {
       username: userName,
-      firstName,
-      lastName,
+      fullName,
       email,
       phoneNumber,
       password,
@@ -56,8 +54,6 @@ const Register = () => {
     );
   };
 
-  console.log(formErrors, "formErrors");
-
   return (
     <section className="register-page">
       <div className="register-card">
@@ -65,7 +61,7 @@ const Register = () => {
         <Form onSubmit={handleSubmit(onSubmit)} className="w-100">
           <div className="mb-4">
             <div class="row justify-content-center align-items-start">
-              <div class="col-12">
+              <div class="col-6">
                 <CustomFormInput
                   type="text"
                   label="User Name"
@@ -81,25 +77,13 @@ const Register = () => {
               <div class="col-6">
                 <CustomFormInput
                   type="text"
-                  label="First Name"
-                  name="firstName"
-                  placeholder="Enter first name"
-                  {...register("firstName", {
-                    required: "First name is required",
+                  label="Full Name"
+                  name="fullName"
+                  placeholder="Enter full name"
+                  {...register("fullName", {
+                    required: "Full name is required",
                   })}
-                  error={formErrors.firstName?.message}
-                />
-              </div>
-              <div class="col-6">
-                <CustomFormInput
-                  type="text"
-                  label="Last Name"
-                  name="lastName"
-                  placeholder="Enter last name"
-                  {...register("lastName", {
-                    required: "Last name is required",
-                  })}
-                  error={formErrors.lastName?.message}
+                  error={formErrors.fullName?.message}
                 />
               </div>
               <div class="col-6">

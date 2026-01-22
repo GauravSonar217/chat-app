@@ -8,7 +8,7 @@ const crypto = require('crypto');
 
 exports.registerUser = async (req, res) => {
 	try {
-		const { username, firstName, lastName, email, password, phoneNumber } = req.body;
+		const { username, fullName, email, password, phoneNumber } = req.body;
 
 		const existingUser = await User.findOne({ $or: [{ email }, { username }] });
 		if (existingUser) {
@@ -24,8 +24,7 @@ exports.registerUser = async (req, res) => {
 
 		const newUser = new User({
 			username,
-			firstName,
-			lastName,
+			fullName,
 			email,
 			password,
 			phoneNumber,
@@ -129,13 +128,18 @@ exports.verifyEmail = async (req, res) => {
 		if (user.emailVerified) {
 			return res.status(400).json({ message: 'Email already verified.' });
 		}
+		const hashedInputOtp = crypto
+			.createHash('sha256')
+			.update(otp)
+			.digest('hex');
+
 		if (
 			!user.emailVerificationOTP ||
-			user.emailVerificationOTP !== otp ||
+			user.emailVerificationOTP !== hashedInputOtp ||
 			!user.emailVerificationOTPExpires ||
 			user.emailVerificationOTPExpires < new Date()
 		) {
-			return res.status(404).json({ message: 'Invalid or expired OTP.' });
+			return res.status(400).json({ message: 'Invalid or expired OTP.' });
 		}
 		user.emailVerified = true;
 		user.emailVerificationOTP = undefined;
@@ -143,7 +147,7 @@ exports.verifyEmail = async (req, res) => {
 		await user.save();
 		return res.status(200).json({
 			success: true,
-			message: 'Email verified successfully'
+			message: 'Email verified successfully, please login to continue.'
 		});
 
 	} catch (error) {

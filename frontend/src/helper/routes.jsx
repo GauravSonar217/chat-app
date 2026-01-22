@@ -10,6 +10,8 @@ import AdminLayout from "../layout/AdminLayout.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicRoute from "./PublicRoute.jsx";
 import VerifyOtp from "../auth/VerifyOtp.jsx";
+import ForgetPassword from "../auth/ForgetPassword.jsx";
+import NewPassword from "../auth/NewPassword.jsx";
 
 const routeWrapper = (comp, isProtected = true) => {
   if (isProtected) {
@@ -30,6 +32,14 @@ const routes = [
   {
     path: "/verify-otp",
     element: routeWrapper(<VerifyOtp />, false),
+  },
+  {
+    path: "/forget-password",
+    element: routeWrapper(<ForgetPassword />, false),
+  },
+  {
+    path: "/reset-password",
+    element: routeWrapper(<NewPassword />, false),
   },
   {
     path: "/dashboard",

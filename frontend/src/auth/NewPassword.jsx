@@ -8,7 +8,7 @@ import { encryptAndStoreLocal, requestHandler } from "../helper";
 import { userLogin } from "../controller";
 import { PulseLoader } from "react-spinners";
 
-const Login = () => {
+const NewPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
@@ -47,28 +47,14 @@ const Login = () => {
   return (
     <section className="login-page">
       <div className="login-card">
-        <h2 className="text-center mb-4">Login</h2>
+        <h2 className="text-center mb-4">Reset Password</h2>
         <Form onSubmit={handleSubmit(onSubmit)} className="w-100">
           <div className="mb-5">
-            <CustomFormInput
-              type="email"
-              label="Email"
-              name="email"
-              placeholder="Enter email"
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Enter a valid email address",
-                },
-              })}
-              error={errors.email?.message}
-            />
             <div className="passwordToggleCont">
               <CustomFormInput
                 label="Password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
+                type="text"
+                placeholder="Enter new password"
                 name="password"
                 className=""
                 {...register("password", {
@@ -80,18 +66,23 @@ const Login = () => {
                 })}
                 error={errors.password?.message}
               />
-              <div className="d-flex justify-content-end w-100">
-                <Link to="/forget-password">
-                  Forget password?
-                </Link>
-              </div>
-              <div className="toggle-password" onClick={handleShowPassword}>
-                {showPassword ? (
-                  <img src="/images/svg/eye-off-line.svg" alt="" width={20} />
-                ) : (
-                  <img src="/images/svg/eye-line.svg" alt="" width={20} />
-                )}
-              </div>
+            </div>
+            <div className="passwordToggleCont">
+              <CustomFormInput
+                label="Confirm Password"
+                type="text"
+                placeholder="Confirm Password"
+                name="confirmPassword"
+                className=""
+                {...register("confirmPassword", {
+                  required: "Please confirm your password",
+                  minLength: {
+                    value: 8,
+                    message: "Password must be at least 8 characters",
+                  },
+                })}
+                error={errors.confirmPassword?.message}
+              />
             </div>
           </div>
 
@@ -100,17 +91,12 @@ const Login = () => {
             className="w-100 btn-primary"
             disabled={loading}
           >
-            {loading ? <PulseLoader size={10} color="#fff" /> : "Login"}
+            {loading ? <PulseLoader size={10} color="#fff" /> : "Create Password"}
           </button>
-          <div className="mt-3 text-center">
-            <p>
-              Don't have an account? <Link to="/register">Register</Link>
-            </p>
-          </div>
         </Form>
       </div>
     </section>
   );
 };
 
-export default Login;
+export default NewPassword;
