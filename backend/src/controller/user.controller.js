@@ -16,7 +16,7 @@ exports.registerUser = async (req, res) => {
 		}
 
 		const otp = Math.floor(100000 + Math.random() * 900000).toString();
-		const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+		const otpExpires = new Date(Date.now() + 60 * 1000);
 		const hashedOtp = crypto
 			.createHash('sha256')
 			.update(otp)
@@ -128,19 +128,22 @@ exports.verifyEmail = async (req, res) => {
 		if (user.emailVerified) {
 			return res.status(400).json({ message: 'Email already verified.' });
 		}
+		if (!user.emailVerificationOTP || !user.emailVerificationOTPExpires) {
+			return res.status(400).json({ message: "OTP not found" });
+		}
+		if (user.emailVerificationOTPExpires < new Date()) {
+			return res.status(410).json({ message: "OTP expired" });
+		}
+
 		const hashedInputOtp = crypto
 			.createHash('sha256')
 			.update(otp)
 			.digest('hex');
 
-		if (
-			!user.emailVerificationOTP ||
-			user.emailVerificationOTP !== hashedInputOtp ||
-			!user.emailVerificationOTPExpires ||
-			user.emailVerificationOTPExpires < new Date()
-		) {
-			return res.status(400).json({ message: 'Invalid or expired OTP.' });
+		if (user.emailVerificationOTP !== hashedInputOtp) {
+			return res.status(401).json({ message: "Invalid OTP" });
 		}
+
 		user.emailVerified = true;
 		user.emailVerificationOTP = undefined;
 		user.emailVerificationOTPExpires = undefined;
@@ -154,4 +157,32 @@ exports.verifyEmail = async (req, res) => {
 		console.error('Email verification error:', error);
 		res.status(500).json({ message: 'Server error. Please try again later.' });
 	}
+};
+
+exports.resendOtp = async (req, res) => {
+	const { email } = req.body;
+
+	const user = await User.findOne({ email });
+	if (!user) return res.status(404).json({ message: "User not found" });
+
+	const otp = Math.floor(100000 + Math.random() * 900000).toString();
+	const otpExpires = new Date(Date.now() + 60 * 1000);
+	const hashedOtp = crypto
+	.createHash('sha256')
+	.update(otp)
+	.digest('hex');
+	
+	user.emailVerificationOTP = hashedOtp;
+	user.emailVerificationOTPExpires = otpExpires;
+	
+	await user.save();
+
+	await sendEmail({
+		to: email,
+		subject: "Your new OTP",
+		text: `Your OTP is ${otp}`,
+		html: `<p>Your verification code is: <b>${otp}</b></p>`
+	});
+
+	res.status(200).json({ success: true, message: "OTP resent successfully" });
 };

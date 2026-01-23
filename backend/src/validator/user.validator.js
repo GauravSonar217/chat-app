@@ -26,3 +26,10 @@ exports.verifyEmailSchema = Joi.object({
     'any.required': 'OTP is required',
   }),
 });
+
+exports.resendOtpSchema = Joi.object({
+  email: Joi.string().email().trim().lowercase().required().messages({
+    'string.email': 'Please provide a valid email',
+    'any.required': 'Email is required',
+  })
+});

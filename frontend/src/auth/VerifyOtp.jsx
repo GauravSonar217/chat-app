@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { decryptAndGetLocal, requestHandler } from "../helper";
-import { verifyEmail } from "../controller";
+import { sendOTP, verifyEmail } from "../controller";
 import { PulseLoader } from "react-spinners";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isExpired, setIsExpired] = useState(false);
 
@@ -92,6 +93,22 @@ const VerifyOtp = () => {
     );
   };
 
+  const ResendOTP = async (e) => {
+    e.preventDefault();
+
+    await requestHandler(
+      () => sendOTP({ email }),
+      setLoading,
+      (res) => {
+        toast.success(res.message);
+        setOtp(Array(6).fill(""));
+        setTimeLeft(60);
+        setIsExpired(false);
+      },
+      () => {},
+    );
+  };
+
   return (
     <section
       style={{ height: "100vh" }}
@@ -128,22 +145,23 @@ const VerifyOtp = () => {
         </div>
         {!isExpired ? (
           <h5 className="text-sm text-gray-500 mt-2">
-            OTP expires in <b>{formatTime(timeLeft)}</b>
+            OTP will be expired in{" "}
+            <b className="text-primary">{formatTime(timeLeft)}</b>
           </h5>
         ) : (
           <button
             type="button"
-            disabled={loading}
-            // onClick={handleResendOtp}
-            className="mt-3 text-blue-600 hover:underline text-sm"
+            disabled={submitting}
+            onClick={ResendOTP}
+            className="mt-3 text-primary hover:underline "
           >
-            Resend OTP
+            {submitting ? "Resending..." : "Resend OTP"}
           </button>
         )}
 
         <button
           type="submit"
-          disabled={loading || isExpired}
+          disabled={loading}
           className="w-full btn btn-primary bg-blue-600 text-white mt-4 py-2 px-5 rounded hover:bg-blue-700"
         >
           {loading ? <PulseLoader size={10} color="#fff" /> : "Verify OTP"}

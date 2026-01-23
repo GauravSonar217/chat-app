@@ -1,4 +1,5 @@
 import axios from "axios";
+import { decryptAndGetLocal } from "../helper";
 import.meta.env.VITE_BACKEND_URL;
 
 export const apiClient = axios.create({
@@ -8,7 +9,8 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("token");
+        const data = decryptAndGetLocal("token");
+        const token = data ? data.token : null;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -19,6 +21,7 @@ apiClient.interceptors.request.use(
     }
 );
 
+// User Authentication APIs
 
 export const userLogin = (data) => {
     return apiClient.post("/user/auth/login", data);
@@ -34,4 +37,8 @@ export const userLogout = () => {
 
 export const verifyEmail = (data) => {
     return apiClient.post("/user/auth/verify-email", data);
+}
+
+export const sendOTP = (data) => {
+    return apiClient.post("/user/auth/send-otp", data);
 }

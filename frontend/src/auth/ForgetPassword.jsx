@@ -5,11 +5,10 @@ import CustomFormInput from "../component/CustomFormInput";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { encryptAndStoreLocal, requestHandler } from "../helper";
-import { userLogin } from "../controller";
+import { sendOTP, userLogin } from "../controller";
 import { PulseLoader } from "react-spinners";
 
 const ForgetPassword = () => {
-  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -19,26 +18,15 @@ const ForgetPassword = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-
   const onSubmit = async (data) => {
+    const payload = { email: data.email.trim() };
     await requestHandler(
-      async () => await userLogin(data),
+      async () => await sendOTP(payload),
       setLoading,
       (res) => {
         toast.success(res.message);
         reset();
-        encryptAndStoreLocal("token", { token: res.token });
-        const userData = {
-          userId: res.user._id,
-          username: res.user.username,
-          email: res.user.email,
-          role: res.user.role,
-        };
-        encryptAndStoreLocal("userData", { userData: userData });
-        navigate("/dashboard");
+        navigate("/verify-otp");
       },
       (err) => {},
     );
@@ -65,7 +53,6 @@ const ForgetPassword = () => {
               error={errors.email?.message}
             />
           </div>
-
           <button
             type="submit"
             className="w-100 btn-primary"
