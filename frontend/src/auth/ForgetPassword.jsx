@@ -5,7 +5,7 @@ import CustomFormInput from "../component/CustomFormInput";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { encryptAndStoreLocal, requestHandler } from "../helper";
-import { sendOTP, userLogin } from "../controller";
+import { sendOTP } from "../controller";
 import { PulseLoader } from "react-spinners";
 
 const ForgetPassword = () => {
@@ -25,6 +25,7 @@ const ForgetPassword = () => {
       setLoading,
       (res) => {
         toast.success(res.message);
+        encryptAndStoreLocal("email", { email: data.email.trim() });
         reset();
         navigate("/verify-otp");
       },

@@ -2,14 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { decryptAndGetLocal, requestHandler } from "../helper";
-import { sendOTP, verifyEmail, verifyOtp } from "../controller";
+import { sendOTP, verifyEmail } from "../controller";
 import { PulseLoader } from "react-spinners";
 
-const VerifyOtp = () => {
+const VerifyEmail = () => {
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [isExpired, setIsExpired] = useState(false);
 
   const inputsRef = useRef([]);
@@ -19,7 +19,7 @@ const VerifyOtp = () => {
   useEffect(() => {
     inputsRef.current[0]?.focus();
     if (!email) {
-      navigate("/");
+      navigate("/register");
     }
   }, [email, navigate]);
 
@@ -81,12 +81,13 @@ const VerifyOtp = () => {
     }
 
     await requestHandler(
-      () => verifyOtp({ email, otp: otpValue }),
+      () => verifyEmail({ email, otp: otpValue }),
       setLoading,
       (res) => {
         toast.success(res.message);
+        localStorage.removeItem("email");
         setOtp(Array(6).fill(""));
-        navigate("/reset-password");
+        navigate("/");
       },
       () => {},
     );
@@ -117,7 +118,9 @@ const VerifyOtp = () => {
         onSubmit={handleSubmit}
         className="p-5 rounded shadow-md border border-1 d-flex flex-column align-items-center"
       >
-        <h2 className="text-xl font-semibold text-center mb-2">Verify OTP</h2>
+        <h2 className="text-xl font-semibold text-center mb-2">
+          Verify Your Email
+        </h2>
         <p className="text-center text-gray-500 mb-6">
           Enter the 6 digit OTP sent to <br />
           <b>{email}</b>
@@ -168,4 +171,4 @@ const VerifyOtp = () => {
   );
 };
 
-export default VerifyOtp;
+export default VerifyEmail;

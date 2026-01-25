@@ -9,9 +9,10 @@ import NotFound from "../pages/NotFound.jsx";
 import AdminLayout from "../layout/AdminLayout.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicRoute from "./PublicRoute.jsx";
-import VerifyOtp from "../auth/VerifyOtp.jsx";
 import ForgetPassword from "../auth/ForgetPassword.jsx";
 import NewPassword from "../auth/NewPassword.jsx";
+import VerifyEmail from "../auth/VerifyEmail.jsx";
+import VerifyOtp from "../auth/VerifyOtp.jsx";
 
 const routeWrapper = (comp, isProtected = true) => {
   if (isProtected) {
@@ -30,12 +31,16 @@ const routes = [
     element: routeWrapper(<Register />, false),
   },
   {
-    path: "/verify-otp",
-    element: routeWrapper(<VerifyOtp />, false),
+    path: "/verify-email",
+    element: routeWrapper(<VerifyEmail />, false),
   },
   {
     path: "/forget-password",
     element: routeWrapper(<ForgetPassword />, false),
+  },
+  {
+    path: "/verify-otp",
+    element: routeWrapper(<VerifyOtp />, false),
   },
   {
     path: "/reset-password",

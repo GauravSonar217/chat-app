@@ -42,3 +42,11 @@ export const verifyEmail = (data) => {
 export const sendOTP = (data) => {
     return apiClient.post("/user/auth/send-otp", data);
 }
+
+export const verifyOtp = (data) => {
+    return apiClient.post("/user/auth/verify-otp", data);
+}
+
+export const resetPassword = (data) => {
+    return apiClient.post("/user/auth/change-password", data);
+}

@@ -9,13 +9,12 @@ exports.registerSchema = Joi.object({
   role: Joi.string().valid('user', 'admin').optional(),
 });
 
-
 exports.loginSchema = Joi.object({
   email: Joi.string().email().trim().lowercase().required(),
   password: Joi.string().min(8).max(128).required(),
 });
 
-exports.verifyEmailSchema = Joi.object({
+exports.verifyOTPSchema = Joi.object({
   email: Joi.string().email().trim().lowercase().required().messages({
     'string.email': 'Please provide a valid email',
     'any.required': 'Email is required',
@@ -27,7 +26,7 @@ exports.verifyEmailSchema = Joi.object({
   }),
 });
 
-exports.resendOtpSchema = Joi.object({
+exports.sendOtpSchema = Joi.object({
   email: Joi.string().email().trim().lowercase().required().messages({
     'string.email': 'Please provide a valid email',
     'any.required': 'Email is required',
