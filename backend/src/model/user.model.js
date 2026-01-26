@@ -46,6 +46,9 @@ const userSchema = new mongoose.Schema({
     passwordResetVerifiedAt: {
         type: Date
     },
+    refreshToken: {
+        type: String
+    },
     emailVerificationOTP: String,
     emailVerificationOTPExpires: Date,
     passwordResetOTP: String,
