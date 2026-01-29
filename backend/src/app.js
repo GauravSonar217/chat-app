@@ -6,12 +6,15 @@ const routes = require('./routes/index.js');
 const createHttpError = require('http-errors');
 const path = require('path');
 const morgan = require('morgan');
+const cookieParser = require("cookie-parser");
+
 
 const app = express();
 
 app.use(cors());
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(morgan('dev'));
 
 connectDB();

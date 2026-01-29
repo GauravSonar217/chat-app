@@ -90,18 +90,80 @@ exports.loginUser = async (req, res) => {
 			{ expiresIn: '1h' }
 		);
 
+		const accessToken = jwt.sign(
+			{ id: user._id, role: user.role },
+			config.jwtSecretKey,
+			{ expiresIn: "15m" }
+		);
+
+		const refreshToken = jwt.sign(
+			{ id: user._id },
+			config.refreshTokenSecret,
+			{ expiresIn: "7d" }
+		);
+
+		const hashedRefreshToken = crypto
+			.createHash("sha256")
+			.update(refreshToken)
+			.digest("hex");
+
+		user.refreshToken = hashedRefreshToken;
+		await user.save();
 		const userObj = user.toObject();
 		delete userObj.password;
 
+		res.cookie("refreshToken", refreshToken, {
+			httpOnly: true,
+			secure: true,
+			sameSite: "strict",
+			maxAge: 7 * 24 * 60 * 60 * 1000
+		});
+
 		res.status(200).json({
 			success: true,
-			token,
+			accessToken,
 			message: 'User logged in successfully',
 			user: userObj,
 		});
 	} catch (error) {
 		console.error('Login error:', error);
 		res.status(500).json({ message: 'Server error. Please try again later' });
+	}
+};
+
+exports.logoutUser = async (req, res) => {
+	try {
+
+		const refreshToken = req.cookies.refreshToken;
+
+		if (!refreshToken) {
+			return res.sendStatus(204);
+		}
+
+		const hashedToken = crypto
+			.createHash("sha256")
+			.update(refreshToken)
+			.digest("hex");
+
+		await User.updateOne(
+			{ refreshToken: hashedToken },
+			{ $unset: { refreshToken: "" } }
+		);
+
+		res.clearCookie("refreshToken", {
+			httpOnly: true,
+			secure: true,
+			sameSite: "strict"
+		});
+
+		res.status(200).json({
+			success: true,
+			message: "User Logged out successfully"
+		});
+
+	} catch (error) {
+		console.error('Logout error:', error); 
+		res.status(500).json({ message: 'Server error. Please try again later.' });
 	}
 };
 
@@ -142,19 +204,6 @@ exports.sentOTP = async (req, res) => {
 		});
 
 	} catch (error) {
-		res.status(500).json({ message: 'Server error. Please try again later.' });
-	}
-};
-
-exports.logoutUser = async (req, res) => {
-	try {
-		res.status(200).json({
-			success: true,
-			message: 'User logged out successfully'
-		});
-
-	} catch (error) {
-		console.error('Logout error:', error);
 		res.status(500).json({ message: 'Server error. Please try again later.' });
 	}
 };
@@ -273,7 +322,7 @@ exports.changePassword = async (req, res) => {
 		}
 
 		const isSamePassword = await bcrypt.compare(newPassword, user.password);
-		
+
 		if (isSamePassword) {
 			return res.status(400).json({ message: "New password cannot be same as old password" });
 		}
