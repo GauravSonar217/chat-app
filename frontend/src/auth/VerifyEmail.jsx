@@ -19,7 +19,7 @@ const VerifyEmail = () => {
   useEffect(() => {
     inputsRef.current[0]?.focus();
     if (!email) {
-      navigate("/register");
+      navigate("/");
     }
   }, [email, navigate]);
 
@@ -85,9 +85,9 @@ const VerifyEmail = () => {
       setLoading,
       (res) => {
         toast.success(res.message);
-        localStorage.removeItem("email");
         setOtp(Array(6).fill(""));
         navigate("/");
+        localStorage.removeItem("email");
       },
       () => {},
     );

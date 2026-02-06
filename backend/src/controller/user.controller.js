@@ -84,12 +84,6 @@ exports.loginUser = async (req, res) => {
 			});
 		}
 
-		const token = jwt.sign(
-			{ id: user._id, email: user.email, role: user.role },
-			config.jwtSecretKey,
-			{ expiresIn: '1h' }
-		);
-
 		const accessToken = jwt.sign(
 			{ id: user._id, role: user.role },
 			config.jwtSecretKey,
@@ -111,6 +105,7 @@ exports.loginUser = async (req, res) => {
 		await user.save();
 		const userObj = user.toObject();
 		delete userObj.password;
+		
 
 		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
