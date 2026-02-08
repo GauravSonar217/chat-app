@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Form, Button, Container, Row, Col, Card } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import CustomFormInput from "../component/CustomFormInput";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -38,14 +38,12 @@ const Register = () => {
       (res) => {
         toast.success(res.message);
         reset();
-
         encryptAndStoreLocal("email", { email: email });
-
         const userData = {
-          userId: res.user._id,
-          username: res.user.username,
-          email: res.user.email,
-          role: res.user.role,
+          userId: res.data._id,
+          username: res.data.username,
+          email: res.data.email,
+          role: res.data.role,
         };
         encryptAndStoreLocal("userData", { userData: userData });
         navigate("/verify-email");

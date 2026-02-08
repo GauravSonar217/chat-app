@@ -1,11 +1,21 @@
 import axios from "axios";
-import { decryptAndGetLocal } from "../helper";
+import { decryptAndGetLocal, encryptAndStoreLocal } from "../helper";
 import.meta.env.VITE_BACKEND_URL;
 
 export const apiClient = axios.create({
     baseURL: `${import.meta.env.VITE_BACKEND_URL}/api`,
     timeout: 120000,
+    withCredentials: true,
 });
+
+const isAuthRoute = (url) => {
+    return url.includes("/auth/login") ||
+        url.includes("/auth/register") ||
+        url.includes("/auth/refresh-token") ||
+        url.includes("/auth/send-otp") ||
+        url.includes("/auth/verify-otp");
+};
+
 
 apiClient.interceptors.request.use(
     (config) => {
@@ -20,6 +30,78 @@ apiClient.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function onRefreshed(token) {
+    refreshSubscribers.forEach(cb => cb(token));
+    refreshSubscribers = [];
+}
+
+function addSubscriber(cb) {
+    refreshSubscribers.push(cb);
+}
+
+function forceLogout() {
+    localStorage.removeItem("token");
+    window.location.href = "/";
+}
+
+apiClient.interceptors.response.use(
+    (response) => response,
+
+    async (error) => {
+        const originalRequest = error.config;
+        const status = error.response?.status;
+        const code = error.response?.data?.code;
+
+
+        if (isAuthRoute(originalRequest.url)) {
+            return Promise.reject(error);
+        }
+
+        if (
+            status === 401 &&
+            code === "ACCESS_TOKEN_EXPIRED" &&
+            !originalRequest._retry
+        ) {
+            originalRequest._retry = true;
+
+            if (isRefreshing) {
+                return new Promise(resolve => {
+                    addSubscriber((token) => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        resolve(apiClient(originalRequest));
+                    });
+                });
+            }
+
+            isRefreshing = true;
+
+            try {
+                const res = await apiClient.post("/user/auth/refresh-token");
+
+                const newToken = res.data.data.accessToken;
+                encryptAndStoreLocal("token", { token: newToken });
+
+                onRefreshed(newToken);
+
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return apiClient(originalRequest);
+
+            } catch (err) {
+                forceLogout();
+                return Promise.reject(err);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
+
 
 // User Authentication APIs
 

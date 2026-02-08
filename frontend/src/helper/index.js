@@ -13,13 +13,27 @@ export const requestHandler = async (api, setLoading, onSuccess, onError, showTo
     }
 
   } catch (error) {
-    if ([401, 403].includes(error.response?.status)) {
-      localStorage.removeItem("token"),
+    if (!error.response) {
+      toast.error("Server unreachable or CORS blocked");
+      return;
+    }
+
+    const code = error.response?.data?.code;
+
+    if (code === "INVALID_ACCESS_TOKEN" || code === "REFRESH_TOKEN_MISMATCH") {
+      localStorage.removeItem("token");
       window.location.replace("/");
     }
+
+    // if ([401, 403].includes(error.response?.status)) {
+    //   localStorage.removeItem("token"),
+    //     window.location.replace("/");
+    // }
     if (showToast) {
       toast.error(error.response?.data?.message);
     }
+
+
 
     onError?.(error);
   } finally {

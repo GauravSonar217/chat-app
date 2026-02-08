@@ -30,12 +30,13 @@ const Login = () => {
       (res) => {
         toast.success(res.message);
         reset();
-        encryptAndStoreLocal("token", { token: res.token });
+        const { data } = res;
+        encryptAndStoreLocal("token", { token: data.accessToken });
         const userData = {
-          userId: res.user._id,
-          username: res.user.username,
-          email: res.user.email,
-          role: res.user.role,
+          userId: data.user._id,
+          username: data.user.username,
+          email: data.user.email,
+          role: data.user.role,
         };
         encryptAndStoreLocal("userData", { userData: userData });
         navigate("/dashboard");
@@ -81,9 +82,7 @@ const Login = () => {
                 error={errors.password?.message}
               />
               <div className="d-flex justify-content-end w-100">
-                <Link to="/forget-password">
-                  Forget password?
-                </Link>
+                <Link to="/forget-password">Forget password?</Link>
               </div>
               <div className="toggle-password" onClick={handleShowPassword}>
                 {showPassword ? (
