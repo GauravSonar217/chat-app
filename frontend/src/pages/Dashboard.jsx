@@ -1,13 +1,23 @@
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { requestHandler } from "../helper";
 import { userLogout } from "../controller";
 import { toast } from "react-toastify";
 import { PulseLoader } from "react-spinners";
 import { useNavigate } from "react-router-dom";
+import useSocket from "../hooks/useSocket";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { socket, reconnect } = useSocket();
+
+  useEffect(() => {
+    if (!socket) {
+      reconnect();
+    }
+  }, [socket]);
+
+ 
 
   const handleLogout = async () => {
     await requestHandler(

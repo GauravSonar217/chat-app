@@ -9,7 +9,6 @@ const morgan = require('morgan');
 const cookieParser = require("cookie-parser");
 const errorMiddleware = require("./middleware/error.middleware.js");
 
-
 const app = express();
 
 app.use(cors({
