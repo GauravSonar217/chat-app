@@ -17,20 +17,19 @@ const Dashboard = () => {
     }
   }, [socket]);
 
- 
-
   const handleLogout = async () => {
     await requestHandler(
       async () => await userLogout(),
       setLoading,
       (res) => {
         toast.success(res.message);
-        localStorage.removeItem("token");
+        localStorage.clear();
         navigate("/");
       },
       (err) => {},
     );
   };
+
   return (
     <div className="dashboard-page">
       <h2>Dashboard</h2>
