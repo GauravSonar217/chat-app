@@ -11,12 +11,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { socket, reconnect } = useSocket();
 
-  useEffect(() => {
-    if (!socket) {
-      reconnect();
-    }
-  }, [socket]);
-
   const handleLogout = async () => {
     await requestHandler(
       async () => await userLogout(),
