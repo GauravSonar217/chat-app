@@ -12,7 +12,7 @@ exports.getChatList = asyncHandler(async (req, res) => {
         .sort({ updatedAt: -1 })
         .skip((page - 1) * limit)
         .limit(parseInt(limit))
-        .populate("members", "username email")
+        .populate("members", "username email avatar")
         .populate({
             path: "lastMessage",
             model: "Message",
@@ -28,15 +28,14 @@ exports.getChatList = asyncHandler(async (req, res) => {
         const otherMember = chat.members.find(member => member._id.toString() !== userId.toString());
         return {
             _id: chat._id,
-            name: chat.isGroupChat ? chat.name : otherMember.username,
-            avatar: chat.isGroupChat ? chat.groupAvatar : otherMember.avatar,
+            name: chat.isGroup ? chat.name : otherMember.username,
+            avatar: chat.isGroup ? chat.groupAvatar : otherMember.avatar,
             lastMessage: chat.lastMessage ? {
                 _id: chat.lastMessage._id,
                 content: chat.lastMessage.content,
                 sender: chat.lastMessage.sender,
                 createdAt: chat.lastMessage.createdAt,
             } : null,
-            lastMessageAt: chat.lastMessageAt,
             isGroup: chat.isGroup,
             updatedAt: chat.updatedAt,
         }
