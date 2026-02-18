@@ -25,7 +25,7 @@ exports.getChatList = asyncHandler(async (req, res) => {
 
 
     const formattedChats = chats.map((chat) => {
-        const otherMember = chat.members.find(member => member._id.toString() !== userId.toString());
+        const otherMember = !chat.isGroup ? chat.members.find(member => member._id.toString() !== userId.toString()) : null;
         return {
             _id: chat._id,
             name: chat.isGroup ? chat.name : otherMember.username,
@@ -51,19 +51,19 @@ exports.getChatList = asyncHandler(async (req, res) => {
 
 
 exports.searchUsers = async (req, res) => {
-  const userId = req.user.id;
-  const { query = "", page = 1 } = req.query;
+    const userId = req.user.id;
+    const { query = "", page = 1 } = req.query;
 
-  const limit = 15;
-  const skip = (page - 1) * limit;
+    const limit = 15;
+    const skip = (page - 1) * limit;
 
-  const users = await User.find({
-    _id: { $ne: userId },
-    username: { $regex: query, $options: "i" },
-  })
-    .select("username avatar email")
-    .limit(limit)
-    .skip(skip);
+    const users = await User.find({
+        _id: { $ne: userId },
+        username: { $regex: query, $options: "i" },
+    })
+        .select("username avatar email")
+        .limit(limit)
+        .skip(skip);
 
-  res.json(users);
+    res.json(users);
 };
