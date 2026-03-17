@@ -9,7 +9,8 @@ const {
 	TokenService,
 	CryptoService,
 	cookieOptions,
-	sanitizeUser
+	sanitizeUser,
+	convertToObjectId
 } = require('../utils/index.js');
 
 exports.registerUser = asyncHandler(async (req, res) => {
@@ -390,4 +391,64 @@ exports.refreshAccessToken = asyncHandler(async (req, res) => {
 			accessToken: newAccessToken
 		}
 	}));
-}) 
+})
+
+exports.getAllUsers = asyncHandler(async (req, res) => {
+
+	const userIdObj = convertToObjectId(req.user.id);
+
+	let { search = "", page = 1, limit = 10 } = req.query;
+
+	page = Number(page);
+	limit = Number(limit);
+
+	const skip = (page - 1) * limit;
+
+	const pipeline = [
+		{
+			$match: {
+				_id: { $ne: userIdObj },
+				...(search && { username: { $regex: search, $options: "i" } })
+			}
+		},
+		{
+			$project: {
+				username: 1,
+				email: 1,
+				avatar: 1,
+				fullName: 1,
+			}
+		},
+		{
+			$facet: {
+				users: [
+					{ $skip: skip },
+					{ $limit: limit }
+				],
+				totalCount: [
+					{ $count: "count" }
+				]
+			}
+		}
+
+	];
+
+	const result = await User.aggregate(pipeline);
+
+	const users = result[0].users;
+	const total = result[0].totalCount[0]?.count || 0;
+
+	res.status(200).json(new ApiResponse({
+		message: "Users fetched successfully",
+		data: {
+			users,
+			pagination: {
+				total,
+				page,
+				limit,
+				totalPages: Math.ceil(total / limit)
+			}
+		}
+	})
+	);
+});

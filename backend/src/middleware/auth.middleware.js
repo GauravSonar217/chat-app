@@ -21,7 +21,7 @@ exports.protect = (req, res, next) => {
         req.user = decoded;
         next();
 
-    } catch (error) {
+    } catch (err) {
         if (err.name === "TokenExpiredError") {
             return next(new ApiError({
                 statusCode: 401,

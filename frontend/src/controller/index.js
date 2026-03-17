@@ -132,3 +132,13 @@ export const verifyOtp = (data) => {
 export const resetPassword = (data) => {
     return apiClient.post("/user/auth/change-password", data);
 }
+
+// User Management APIs
+
+export const getAllUsers = ({ page, perPage, search}) => {
+   let url = `/user/users?page=${page}&perPage=${perPage}`;
+   if(search) {
+    url += `&search=${search}`;
+   }
+   return apiClient.get(url);
+}

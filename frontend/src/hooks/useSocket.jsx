@@ -29,7 +29,7 @@ const useSocket = () => {
     }
 
     const newSocket = io(SOCKET_URL, {
-      transport: ["websocket"],
+      transports: ["websocket"],
       withCredentials: true,
       auth: {
         token: token,

@@ -1,6 +1,6 @@
 import React, { use, useEffect, useState } from "react";
 import { requestHandler } from "../helper";
-import { userLogout } from "../controller";
+import { getAllUsers, userLogout } from "../controller";
 import { toast } from "react-toastify";
 import { PulseLoader } from "react-spinners";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { socket, reconnect } = useSocket();
+  const [usersList, setUsersList] = useState([]);
 
   const handleLogout = async () => {
     await requestHandler(
@@ -23,6 +24,28 @@ const Dashboard = () => {
       (err) => {},
     );
   };
+
+  const GetAllUsers = async () => {
+    await requestHandler(
+      async () =>
+        await getAllUsers({
+          page: 1,
+          perPage: 10,
+          search: "",
+        }),
+      setLoading,
+      (res) => {
+        setUsersList(res.data.users);
+      },
+      (err) => {},
+    );
+  };
+
+  console.log(usersList, "usersList");
+
+  useEffect(() => {
+    GetAllUsers();
+  }, []);
 
   return (
     <div className="dashboard-page">

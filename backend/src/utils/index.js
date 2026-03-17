@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const config = require("../config/config");
+const mongoose = require("mongoose");
 
 /* =========================================================
 API ERROR
@@ -132,6 +133,13 @@ const sanitizeUser = (user) => {
   return obj;
 };
 
+const convertToObjectId = (id) => {
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  return id;
+};
+
 /* =========================================================
 🔥 SINGLE EXPORT OBJECT (IMPORTANT)
 ========================================================= */
@@ -142,6 +150,7 @@ module.exports = {
   PasswordService,
   TokenService,
   CryptoService,
+  convertToObjectId,
   cookieOptions,
   sanitizeUser,
 };

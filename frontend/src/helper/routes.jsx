@@ -6,7 +6,6 @@ import Dashboard from "../pages/Dashboard.jsx";
 import UserManagement from "../pages/UserManagement.jsx";
 import PodManagement from "../pages/PodManagement.jsx";
 import NotFound from "../pages/NotFound.jsx";
-import AdminLayout from "../layout/AdminLayout.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicRoute from "./PublicRoute.jsx";
 import ForgetPassword from "../auth/ForgetPassword.jsx";
