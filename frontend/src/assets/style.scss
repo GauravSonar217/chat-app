@@ -1,6 +1,5 @@
 @use "themes/variables" as *;
 @use "themes/mixins" as *;
-@import "tailwindcss";
 
 body,
 html {
@@ -35,14 +34,15 @@ a {
 
 .btn-primary {
   background-color: $primary;
-  border: 1px solid $primary;
+  border: none;
+  outline: none;
   color: $white;
   padding: 10px 15px;
   border-radius: 8px;
   font-weight: 600;
   font-size: 1.2rem;
 
-  &:disabled{
+  &:disabled {
     opacity: 1;
   }
 }
@@ -94,29 +94,25 @@ a {
 .theme-input {
   margin-bottom: 15px;
 
-  .form-label {
-    font-weight: 600;
-    font-size: 1rem;
-  }
-
   .form-control {
-    outline: none;
-    background: transparent;
-    border: 1px solid $border-color;
-    border-radius: 0.5rem;
-    color: #fff;
-    padding: 10px;
     width: 100%;
-    font-size: 1rem;
-
-    &:focus {
-      border: 1px solid $primary;
-    }
+    padding: 1rem;
+    border: none;
+    outline: none;
+    border-radius: 0.5rem;
+    background-color: #1f003a;
+    font-size: 1.1rem;
+    color: $white;
 
     &::placeholder {
       color: #bbb;
-      font-size: 1rem;
+      font-size: 1.1rem;
     }
+  }
+  .error-text {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: 5px;
   }
 }
 
@@ -130,4 +126,42 @@ a {
   right: 10px;
   transform: translateY(-50%);
   cursor: pointer;
+}
+
+// common background for all pages
+
+.pageContainer {
+  width: 100%;
+  height: 100vh;
+  background-color: $dark;
+  color: $white;
+  @include flex-center;
+
+  .login-card {
+    width: 600px;
+    border: 1px solid $border-color;
+    border-radius: 15px;
+    flex-direction: column;
+    @include flex-center;
+    padding: 40px 80px;
+  }
+
+  .formContainer {
+    .form-card{
+      border: 1px solid $border-color;
+      border-radius: 15px;
+    }
+    h2 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+    }
+  }
+}
+
+.card-body {
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+  @include flex-center;
 }

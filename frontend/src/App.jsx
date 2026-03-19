@@ -1,5 +1,5 @@
 import React from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
+import "./index.css";
 import "./assets/style.scss";
 import { ToastContainer, toast } from "react-toastify";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";

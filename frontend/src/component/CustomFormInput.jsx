@@ -1,5 +1,4 @@
 import React from "react";
-import { Form } from "react-bootstrap";
 
 const CustomFormInput = ({
   label,
@@ -10,19 +9,16 @@ const CustomFormInput = ({
   ...rest
 }) => {
   return (
-    <Form.Group className="theme-input">
-      <Form.Label>{label}</Form.Label>
-      <Form.Control
+    <div className="theme-input">
+      <input
+        className={`form-control ${className}`}
         type={type}
         placeholder={placeholder}
-        className={className}
         isInvalid={!!error}
         {...rest}
       />
-      {error && (
-        <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
-      )}
-    </Form.Group>
+      {error && <p className="error-text">{error}</p>}
+    </div>
   );
 };
 

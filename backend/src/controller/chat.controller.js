@@ -1,7 +1,7 @@
 const Chat = require("../model/chat.model");
 const Message = require("../model/message.model");
 const User = require("../model/user.model");
-const { asyncHandler, ApiResponse, convertToObjectId } = require("../utils");
+const { asyncHandler, ApiResponse, convertToObjectId, ApiError } = require("../utils");
 
 exports.getChatList = asyncHandler(async (req, res) => {
 
@@ -138,20 +138,21 @@ exports.getChatList = asyncHandler(async (req, res) => {
     }));
 });
 
-const mongoose = require("mongoose");
-
 exports.accessChat = asyncHandler(async (req, res) => {
 
-    const currentUserId = new mongoose.Types.ObjectId(req.user._id);
+    const currentUserId = convertToObjectId(req.user._id);
     const { userId } = req.body;
 
     if (!userId) {
-        throw new Error("UserId is required");
+        throw new ApiError({
+            statusCode: 400,
+            message: 'User ID is required.',
+            code: 'USER_ID_REQUIRED'
+        });
     }
 
-    const targetUserId = new mongoose.Types.ObjectId(userId);
+    const targetUserId = convertToObjectId(userId);
 
-    // 1️⃣ check existing chat
     const existingChat = await Chat.aggregate([
         {
             $match: {
@@ -172,7 +173,6 @@ exports.accessChat = asyncHandler(async (req, res) => {
         }
     ]);
 
-    // 2️⃣ if exists → return
     if (existingChat.length > 0) {
         return res.status(200).json(new ApiResponse({
             message: "Chat fetched successfully",
@@ -180,13 +180,11 @@ exports.accessChat = asyncHandler(async (req, res) => {
         }));
     }
 
-    // 3️⃣ else create new chat
     const newChat = await Chat.create({
         members: [currentUserId, targetUserId],
         isGroup: false
     });
 
-    // 4️⃣ populate manually using aggregation
     const createdChat = await Chat.aggregate([
         {
             $match: { _id: newChat._id }
@@ -204,6 +202,81 @@ exports.accessChat = asyncHandler(async (req, res) => {
     res.status(201).json(new ApiResponse({
         message: "Chat created successfully",
         data: createdChat[0]
+    }));
+});
+
+exports.getChatMessages = asyncHandler(async (req, res) => {
+
+    const { chatId } = req.params;
+
+    let { page = 1, limit = 20 } = req.query;
+
+    page = Number(page);
+    limit = Number(limit);
+
+    const skip = (page - 1) * limit;
+
+    const pipeline = [
+        {
+            $match: {
+                chat: convertToObjectId(chatId)
+            }
+        },
+        {
+            $sort: { createdAt: -1 }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "sender",
+                foreignField: "_id",
+                as: "sender"
+            }
+        },
+        {
+            $unwind: "$sender"
+        },
+        {
+            $project: {
+                content: 1,
+                createdAt: 1,
+                sender: {
+                    _id: "$sender._id",
+                    username: "$sender.username",
+                    email: "$sender.email",
+                    avatar: "$sender.avatar"
+                }
+            }
+        },
+        {
+            $facet: {
+                messages: [
+                    { $skip: skip },
+                    { $limit: limit }
+                ],
+                totalCount: [
+                    { $count: "count" }
+                ]
+            }
+        }
+    ];
+
+    const result = await Message.aggregate(pipeline);
+
+    const messages = result[0].messages;
+    const total = result[0].totalCount[0]?.count || 0;
+
+    res.status(200).json(new ApiResponse({
+        message: "Messages fetched successfully",
+        data: {
+            messages,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        }
     }));
 
 });
