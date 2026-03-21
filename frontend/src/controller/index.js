@@ -109,6 +109,10 @@ export const userLogin = (data) => {
     return apiClient.post("/user/auth/login", data);
 }
 
+export const loginAndRegisterWithGoogle = (data) => {
+    return apiClient.post("/user/auth/google", data);
+}
+
 export const userRegister = (data) => {
     return apiClient.post("/user/auth/register", data);
 }

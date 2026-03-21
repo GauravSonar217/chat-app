@@ -1,6 +1,10 @@
 
 const User = require('../model/user.model');
 const sendEmail = require('../utils/sendEmail');
+const { OAuth2Client } = require("google-auth-library");
+const config = require("../config/config");
+const client = new OAuth2Client(config.googleClientId);
+
 const {
 	ApiError,
 	ApiResponse,
@@ -39,6 +43,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 		email,
 		password: hashedPassword,
 		phoneNumber,
+		authProvider: "local",
 		emailVerificationOTP: hashedOtp,
 		emailVerificationOTPExpires: otpExpires,
 		emailVerified: false,
@@ -78,6 +83,22 @@ exports.loginUser = asyncHandler(async (req, res) => {
 		});
 	}
 
+	if (!user.password) {
+		throw new ApiError({
+			statusCode: 400,
+			message: "Please login with Google",
+			code: "GOOGLE_AUTH_ONLY"
+		});
+	}
+
+	if (user.authProvider === "google") {
+		throw new ApiError({
+			statusCode: 400,
+			message: "Please login with Google",
+			code: "GOOGLE_AUTH_ONLY"
+		});
+	}
+
 	const isMatch = await PasswordService.compare(password, user.password);
 
 	if (!isMatch) {
@@ -109,6 +130,49 @@ exports.loginUser = asyncHandler(async (req, res) => {
 		}
 	}));
 });
+
+exports.googleLogin = asyncHandler(async (req, res) => {
+	const { token } = req.body;
+
+	const ticket = await client.verifyIdToken({
+		idToken: token,
+		audience: config.googleClientId
+	})
+
+	const payload = ticket.getPayload();
+
+	const { email, name } = payload;
+
+	let user = await User.findOne({ email });
+
+	if (!user) {
+		user = await User.create({
+			email,
+			username: email.split("@")[0],
+			fullName: name,
+			password: null,
+			authProvider: "google",
+			emailVerified: true,
+		})
+	}
+
+	const accessToken = TokenService.generateAccessToken(user);
+	const refreshToken = TokenService.generateRefreshToken(user);
+
+	const hashedRefreshToken = CryptoService.hash(refreshToken);
+	user.refreshToken = hashedRefreshToken;
+	await user.save();
+
+	res.cookie("refreshToken", refreshToken, cookieOptions);
+
+	res.status(200).json(new ApiResponse({
+		message: 'User logged in successfully',
+		data: {
+			accessToken,
+			user: sanitizeUser(user),
+		},
+	}));
+})
 
 exports.logoutUser = asyncHandler(async (req, res) => {
 	const refreshToken = req.cookies.refreshToken;

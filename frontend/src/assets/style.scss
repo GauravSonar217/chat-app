@@ -11,15 +11,6 @@ html {
   color: $white;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  margin: 0;
-}
-
 p {
   margin: 0;
 }
@@ -92,11 +83,11 @@ a {
 }
 
 .theme-input {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 
   .form-control {
     width: 100%;
-    padding: 1rem;
+    padding: 0.8rem;
     border: none;
     outline: none;
     border-radius: 0.5rem;
@@ -112,7 +103,6 @@ a {
   .error-text {
     color: red;
     font-size: 0.9rem;
-    margin-top: 5px;
   }
 }
 
@@ -147,14 +137,9 @@ a {
   }
 
   .formContainer {
-    .form-card{
-      border: 1px solid $border-color;
-      border-radius: 15px;
-    }
     h2 {
       font-size: 2.5rem;
       font-weight: 600;
-      margin-bottom: 2rem;
     }
   }
 }

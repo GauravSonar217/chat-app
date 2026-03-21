@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { decryptAndGetLocal, requestHandler } from "../helper";
 import { sendOTP, verifyEmail } from "../controller";
 import { PulseLoader } from "react-spinners";
+import CustomFormInput from "../component/CustomFormInput";
 
 const VerifyEmail = () => {
   const [otp, setOtp] = useState(Array(6).fill(""));
@@ -98,7 +99,7 @@ const VerifyEmail = () => {
 
     await requestHandler(
       () => sendOTP({ email }),
-      setLoading,
+      setSubmitting,
       (res) => {
         toast.success(res.message);
         setOtp(Array(6).fill(""));
@@ -110,63 +111,70 @@ const VerifyEmail = () => {
   };
 
   return (
-    <section
-      style={{ height: "100vh" }}
-      className="h-screen d-flex align-items-center justify-content-center bg-transparent"
-    >
-      <form
-        onSubmit={handleSubmit}
-        className="p-5 rounded shadow-md border border-1 d-flex flex-column align-items-center"
-      >
-        <h2 className="text-xl font-semibold text-center mb-2">
-          Verify Your Email
-        </h2>
-        <p className="text-center text-gray-500 mb-6">
-          Enter the 6 digit OTP sent to <br />
-          <b>{email}</b>
-        </p>
+    <section className="pageContainer">
+      <div className="card-body">
+        <div className="p-10 bg-[#0C0C1E] bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] w-[550px] p-[1.5px] rounded-xl">
+          <div className="bg-black rounded-xl p-10 flex flex-col justify-center items-center">
+            <img src="/images/png/verify-otp.png" alt="" className="mb-4" />
+            <div className="formContainer w-full flex flex-col justify-center items-center">
+              <form action="submit" onSubmit={handleSubmit} className="w-full">
+                <h2 className="text-center mb-5">Verify Email</h2>
+                <p className="text-center text-gray-400 mb-6">
+                  Enter the 6 digit OTP sent to <br />
+                  <span className="text-white font-bold">{email}</span>
+                </p>
 
-        <div
-          className="d-flex justify-content-between my-4 gap-3"
-          onPaste={handlePaste}
-        >
-          {otp.map((digit, index) => (
-            <input
-              key={index}
-              type="text"
-              value={digit}
-              ref={(el) => (inputsRef.current[index] = el)}
-              onChange={(e) => handleChange(e.target.value, index)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-              className="text-center p-3 border rounded"
-              style={{ fontSize: "30px", width: "60px", height: "60px" }}
-            />
-          ))}
+                <div
+                  className="flex justify-center items-center my-4 gap-2"
+                  onPaste={handlePaste}
+                >
+                  {otp.map((digit, index) => (
+                    <CustomFormInput
+                      type="tel"
+                      key={index}
+                      value={digit}
+                      ref={(el) => (inputsRef.current[index] = el)}
+                      onChange={(e) => handleChange(e.target.value, index)}
+                      onKeyDown={(e) => handleKeyDown(e, index)}
+                      className="text-center h-18 font-bold text-xl"
+                    />
+                  ))}
+                </div>
+                <div className=" flex justify-end items-center">
+                  {!isExpired ? (
+                    <h5 className="text-sm text-gray-400 mt-2">
+                      OTP will be expired in{" "}
+                      <b className="text-primary ml-2 text-white font-bold">
+                        {formatTime(timeLeft)}
+                      </b>
+                    </h5>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={submitting}
+                      onClick={ResendOTP}
+                      className="mt-2 text-white font-semibold cursor-pointer"
+                    >
+                      {submitting ? "Resending..." : "Resend OTP"}
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary cursor-pointer my-4 bg-gradient-to-b from-[#562B96] to-[#2E105B] w-full"
+                >
+                  {loading ? (
+                    <PulseLoader size={10} color="#fff" />
+                  ) : (
+                    "Verify OTP"
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
-        {!isExpired ? (
-          <h5 className="text-sm text-gray-500 mt-2">
-            OTP will be expired in{" "}
-            <b className="text-primary">{formatTime(timeLeft)}</b>
-          </h5>
-        ) : (
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={ResendOTP}
-            className="mt-3 text-primary hover:underline "
-          >
-            {submitting ? "Resending..." : "Resend OTP"}
-          </button>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full btn btn-primary bg-blue-600 text-white mt-4 py-2 px-5 rounded hover:bg-blue-700"
-        >
-          {loading ? <PulseLoader size={10} color="#fff" /> : "Verify OTP"}
-        </button>
-      </form>
+      </div>
     </section>
   );
 };

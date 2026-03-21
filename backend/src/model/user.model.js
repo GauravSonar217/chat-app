@@ -23,8 +23,13 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false,
         minLength: 8,
+    },
+    authProvider: {
+        type: String,
+        enum: ["local", "google"],
+        default: "local",
     },
     phoneNumber: {
         type: String,
@@ -52,7 +57,7 @@ const userSchema = new mongoose.Schema({
     emailVerificationOTP: String,
     emailVerificationOTPExpires: Date,
     passwordResetOTP: String,
-    passwordResetOTPExpires: Date,  
+    passwordResetOTPExpires: Date,
 
 }, { timestamps: true });
 

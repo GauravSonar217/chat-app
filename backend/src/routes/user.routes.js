@@ -13,7 +13,8 @@ router.post("/auth/logout", userController.logoutUser);
 router.post("/auth/verify-email", validate(verifyOTPSchema), userController.verifyEmail);
 router.post("/auth/send-otp", validate(sendOtpSchema), userController.sentOTP);
 router.post("/auth/verify-otp", validate(verifyOTPSchema), userController.verifyOtp);
-router.post("/auth/change-password", auth, userController.changePassword);
+router.post("/auth/change-password", userController.changePassword);
+router.post("/auth/google", userController.googleLogin);
 
 // user routes
 router.get("/users", auth, userController.getAllUsers);
