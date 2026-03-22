@@ -7,7 +7,7 @@ exports.getChatList = asyncHandler(async (req, res) => {
 
     const userIdObj = convertToObjectId(req.user.id);
 
-    let { page = 1, limit = 10 } = req.query;
+    let { search = "", page = 1, limit = 10 } = req.query;
 
     page = Number(page);
     limit = Number(limit);
@@ -17,11 +17,11 @@ exports.getChatList = asyncHandler(async (req, res) => {
     const pipeline = [
         {
             $match: {
-                members: userIdObj
+                members: userIdObj,
             }
         },
         {
-            $sort: { updatedAt: -1 }
+            $sort: { lastMessageAt: -1 }
         },
         {
             $lookup: {
@@ -29,6 +29,62 @@ exports.getChatList = asyncHandler(async (req, res) => {
                 localField: "members",
                 foreignField: "_id",
                 as: "members"
+            }
+        },
+        {
+            $addFields: {
+                otherMember: {
+                    $arrayElemAt: [
+                        {
+                            $filter: {
+                                input: "$members",
+                                as: "member",
+                                cond: { $ne: ["$$member._id", userIdObj] }
+                            }
+                        },
+                        0
+                    ]
+                }
+            }
+        },
+        ...(search
+            ? [
+                {
+                    $match: {
+                        $or: [
+                            { "otherMember.fullName": { $regex: search, $options: "i" } },
+                            { "otherMember.username": { $regex: search, $options: "i" } }
+                        ]
+                    }
+                }
+            ]
+            : []),
+        {
+            $sort: { lastMessageAt: -1 }
+        },
+        {
+            $lookup: {
+                from: "messages",
+                let: { chatId: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ["$chatId", "$$chatId"] },
+                            seenBy: { $ne: userIdObj }
+                        }
+                    },
+                    {
+                        $count: "count"
+                    }
+                ],
+                as: "unreadData"
+            }
+        },
+        {
+            $addFields: {
+                unreadCount: {
+                    $ifNull: [{ $arrayElemAt: ["$unreadData.count", 0] }, 0]
+                }
             }
         },
         {
@@ -60,47 +116,28 @@ exports.getChatList = asyncHandler(async (req, res) => {
             }
         },
         {
-            $addFields: {
-                otherMember: {
-                    $arrayElemAt: [
-                        {
-                            $filter: {
-                                input: "$members",
-                                as: "member",
-                                cond: { $ne: ["$$member._id", userIdObj] }
-                            }
-                        },
-                        0
-                    ]
-                }
-            }
-        },
-        {
             $project: {
                 _id: 1,
                 isGroup: 1,
+                createdAt: 1,
                 updatedAt: 1,
-                name: {
-                    $cond: {
-                        if: "$isGroup",
-                        then: "$name",
-                        else: "$otherMember.username"
-                    }
-                },
-                avatar: {
-                    $cond: {
-                        if: "$isGroup",
-                        then: "$groupAvatar",
-                        else: "$otherMember.avatar"
-                    }
+                unreadCount: 1,
+                user: {
+                    _id: "$otherMember._id",
+                    username: "$otherMember.username",
+                    fullName: "$otherMember.fullName",
+                    avatar: "$otherMember.avatar",
+                    email: "$otherMember.email"
                 },
                 lastMessage: {
                     _id: "$lastMessage._id",
-                    content: "$lastMessage.content",
+                    content: "$lastMessage.text",
                     createdAt: "$lastMessage.createdAt",
                     sender: {
                         _id: "$lastMessage.sender._id",
                         username: "$lastMessage.sender.username",
+                        fullName: "$lastMessage.sender.fullName",
+                        avatar: "$lastMessage.sender.avatar",
                         email: "$lastMessage.sender.email"
                     }
                 }
@@ -140,7 +177,7 @@ exports.getChatList = asyncHandler(async (req, res) => {
 
 exports.accessChat = asyncHandler(async (req, res) => {
 
-    const currentUserId = convertToObjectId(req.user._id);
+    const currentUserId = convertToObjectId(req.user.id);
     const { userId } = req.body;
 
     if (!userId) {
@@ -166,6 +203,27 @@ exports.accessChat = asyncHandler(async (req, res) => {
                 localField: "members",
                 foreignField: "_id",
                 as: "members"
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                isGroup: 1,
+                members: {
+                    $map: {
+                        input: "$members",
+                        as: "member",
+                        in: {
+                            _id: "$$member._id",
+                            username: "$$member.username",
+                            fullName: "$$member.fullName",
+                            avatar: "$$member.avatar",
+                            email: "$$member.email"
+                        }
+                    }
+                },
+                createdAt: 1,
+                updatedAt: 1
             }
         },
         {
@@ -196,6 +254,27 @@ exports.accessChat = asyncHandler(async (req, res) => {
                 foreignField: "_id",
                 as: "members"
             }
+        },
+        {
+            $project: {
+                _id: 1,
+                isGroup: 1,
+                members: {
+                    $map: {
+                        input: "$members",
+                        as: "member",
+                        in: {
+                            _id: "$$member._id",
+                            username: "$$member.username",
+                            fullName: "$$member.fullName",
+                            avatar: "$$member.avatar",
+                            email: "$$member.email"
+                        }
+                    }
+                },
+                createdAt: 1,
+                updatedAt: 1
+            }
         }
     ]);
 
@@ -219,7 +298,7 @@ exports.getChatMessages = asyncHandler(async (req, res) => {
     const pipeline = [
         {
             $match: {
-                chat: convertToObjectId(chatId)
+                chatId: convertToObjectId(chatId)
             }
         },
         {
@@ -238,7 +317,7 @@ exports.getChatMessages = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                content: 1,
+                content: "$text",
                 createdAt: 1,
                 sender: {
                     _id: "$sender._id",
@@ -278,9 +357,26 @@ exports.getChatMessages = asyncHandler(async (req, res) => {
             }
         }
     }));
-
 });
 
+exports.markAsRead = asyncHandler(async (req, res) => {
+    const { chatId } = req.params;
+    const userId = convertToObjectId(req.user.id);
+
+    await Message.updateMany(
+        {
+            chatId: convertToObjectId(chatId),
+            seenBy: { $ne: userId }
+        },
+        {
+            $addToSet: { seenBy: userId }
+        }
+    );
+
+    res.status(200).json(new ApiResponse({
+        message: "Messages marked as read"
+    }));
+});
 
 exports.searchUsers = async (req, res) => {
     const userId = req.user.id;

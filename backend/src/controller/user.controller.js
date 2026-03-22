@@ -176,9 +176,11 @@ exports.googleLogin = asyncHandler(async (req, res) => {
 
 exports.logoutUser = asyncHandler(async (req, res) => {
 	const refreshToken = req.cookies.refreshToken;
-
+	
 	if (!refreshToken) {
-		return res.sendStatus(204);
+		return res.status(200).json(new ApiResponse({
+			message: "User already logged out"
+		}));
 	}
 
 	const hashedToken = CryptoService.hash(refreshToken);
@@ -472,7 +474,7 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
 		{
 			$match: {
 				_id: { $ne: userIdObj },
-				...(search && { username: { $regex: search, $options: "i" } })
+				...(search && { fullName: { $regex: search, $options: "i" } })
 			}
 		},
 		{

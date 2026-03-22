@@ -14,6 +14,7 @@ router.post("/auth/verify-email", validate(verifyOTPSchema), userController.veri
 router.post("/auth/send-otp", validate(sendOtpSchema), userController.sentOTP);
 router.post("/auth/verify-otp", validate(verifyOTPSchema), userController.verifyOtp);
 router.post("/auth/change-password", userController.changePassword);
+router.post("/auth/refresh-token", userController.refreshAccessToken);
 router.post("/auth/google", userController.googleLogin);
 
 // user routes

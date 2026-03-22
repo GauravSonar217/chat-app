@@ -76,7 +76,7 @@ const TokenService = {
     jwt.sign(
       { id: user._id, role: user.role, email: user.email },
       config.jwtSecretKey,
-      { expiresIn: "15m" }
+      { expiresIn: "1d" }
     ),
 
   generateRefreshToken: (user) =>

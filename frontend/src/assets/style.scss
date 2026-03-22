@@ -23,6 +23,15 @@ a {
   cursor: pointer;
 }
 
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .btn-primary {
   background-color: $primary;
   border: none;
@@ -149,4 +158,50 @@ a {
   height: 100%;
   padding: 2rem;
   @include flex-center;
+}
+
+.chatBox {
+  .messageBox {
+    position: relative;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    max-width: 60%;
+    text-wrap: wrap;
+
+    &.otherMessage {
+      background-color: $messageColor;
+
+      &::after {
+        content: "";
+        position: absolute;
+        left: -5px; /* Position the tail on the left edge */
+        bottom: 0px;
+        width: 0;
+        height: 0;
+        /* The "CSS triangle trick" */
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-right: 10px solid $messageColor;
+      }
+    }
+
+    &.myMessage {
+      background-color: $messageColor2;
+      align-self: flex-end;
+
+      &::after {
+        content: "";
+        position: absolute;
+        right: -5px;
+        bottom: 0px;
+        width: 0;
+        height: 0;
+        /* The "CSS triangle trick" to create the arrow shape */
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-left: 10px solid $messageColor2;
+      }
+    }
+  }
 }

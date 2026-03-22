@@ -20,7 +20,7 @@ export const requestHandler = async (api, setLoading, onSuccess, onError, showTo
 
     const code = error.response?.data?.code;
 
-    if (code === "INVALID_ACCESS_TOKEN" || code === "REFRESH_TOKEN_MISMATCH") {
+    if (code === "REFRESH_TOKEN_MISMATCH") {
       localStorage.removeItem("token");
       window.location.replace("/");
     }
@@ -32,9 +32,6 @@ export const requestHandler = async (api, setLoading, onSuccess, onError, showTo
     if (showToast) {
       toast.error(error.response?.data?.message);
     }
-
-
-
     onError?.(error);
   } finally {
     setLoading?.(false);

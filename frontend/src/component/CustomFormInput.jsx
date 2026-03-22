@@ -4,12 +4,13 @@ const CustomFormInput = ({
   label,
   type,
   placeholder,
+  parentClass,
   className,
   error,
   ...rest
 }) => {
   return (
-    <div className="theme-input">
+    <div className={`theme-input ${parentClass}`}>
       <input
         className={`form-control ${className}`}
         type={type}

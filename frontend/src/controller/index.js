@@ -139,10 +139,34 @@ export const resetPassword = (data) => {
 
 // User Management APIs
 
-export const getAllUsers = ({ page, perPage, search}) => {
-   let url = `/user/users?page=${page}&perPage=${perPage}`;
-   if(search) {
-    url += `&search=${search}`;
-   }
-   return apiClient.get(url);
+export const getAllUsers = ({ page, perPage, search }) => {
+    let url = `/user/users?page=${page}&limit=${perPage}`;
+    if (search) {
+        url += `&search=${search}`;
+    }
+    return apiClient.get(url);
+}
+
+// Chat Management APIs
+
+export const getAllChats = ({ page, perPage, search }) => {
+    let url = `/chats/chats-list?page=${page}&limit=${perPage}`;
+    if (search) {
+        url += `&search=${search}`;
+    }
+    return apiClient.get(url);
+}
+
+export const accessChat = (data) => {
+    return apiClient.post("/chats/create-chat", data);
+}
+
+export const getChatMessages = (id, { page, perPage }) => {
+    let url = `/chats/messages/${id}?page=${page}&limit=${perPage}`;
+    return apiClient.get(url);
+}
+
+export const markAsRead = (id) => {
+    let url = `/chats/messages/${id}/read`;
+    return apiClient.put(url);
 }

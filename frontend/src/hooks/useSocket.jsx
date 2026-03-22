@@ -11,8 +11,6 @@ const useSocket = () => {
   // this ensures that socket always gets the latest token everytime
   const getToken = useCallback(() => {
     const data = decryptAndGetLocal("token");
-    console.log(data, "data");
-    
     return data?.token || null;
   }, []);
 
@@ -20,10 +18,7 @@ const useSocket = () => {
     const token = getToken();
 
     if (!token) return;
-
-    console.log(token, "token");
     
-
     if (socketRef.current) {
       socketRef.current.disconnect();
     }
@@ -60,13 +55,19 @@ const useSocket = () => {
         socketRef.current.disconnect();
       }
     };
-  }, [connectSocket]);
+  }, []);
 
   const reconnect = () => {
     connectSocket();
   };
 
-  return { socket, reconnect };
+  const disconnect = () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+    }
+  };
+
+  return { socket, reconnect, disconnect };
 };
 
 export default useSocket;
