@@ -1,7 +1,8 @@
-import React, { use, useEffect, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import { decryptAndGetLocal, requestHandler } from "../helper";
 import dayjs from "dayjs";
 import { useDebounce } from "use-debounce";
+import EmojiPicker from "emoji-picker-react";
 import {
   accessChat,
   getAllChats,
@@ -17,10 +18,14 @@ import CustomFormInput from "../component/CustomFormInput";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(false);
+  const chatContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const userData = decryptAndGetLocal("userData");
+  const [showEmoji, setShowEmoji] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
   const { socket, reconnect, disconnect } = useSocket();
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [debouncedText] = useDebounce(searchText, 500);
@@ -34,12 +39,17 @@ const Dashboard = () => {
 
   const [hasMoreChats, setHasMoreChats] = useState(true);
   const [hasMoreUsers, setHasMoreUsers] = useState(true);
+  const onlineUsersSet = new Set(onlineUsers);
+  const isOnline = onlineUsersSet.has(selectedChat?.user?._id);
+  const selectedChatRef = useRef(null);
 
-  const [totalChatPages, setTotalChatPages] = useState(1);
-  const [totalUserPages, setTotalUserPages] = useState(1);
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
 
-  const [totalChats, setTotalChats] = useState(0);
-  const [totalUsers, setTotalUsers] = useState(0);
+  const handleEmojiClick = (emojiData) => {
+    setNewMessage((prev) => prev + emojiData.emoji);
+  };
 
   const handleLogout = async () => {
     await requestHandler(
@@ -61,6 +71,24 @@ const Dashboard = () => {
     setChatList([]);
     setUsersList([]);
   }, [debouncedText]);
+
+  const scrollToBottom = (smooth = true) => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom(false);
+  }, [selectedChat]);
+
+  // new messages pe (smooth scroll)
+  useEffect(() => {
+    scrollToBottom(true);
+  }, [messages]);
 
   const GetAllUsers = async () => {
     await requestHandler(
@@ -145,7 +173,7 @@ const Dashboard = () => {
         }),
       setLoading,
       (res) => {
-        setMessages(res.data.messages);
+        setMessages(res.data.messages.reverse());
       },
       (err) => {},
     );
@@ -187,6 +215,33 @@ const Dashboard = () => {
   // Socket events
 
   useEffect(() => {
+    if (!socket) return;
+
+    socket.emit("get_online_users");
+
+    socket.on("online_users_list", (users) => {
+      setOnlineUsers(users);
+    });
+
+    socket.on("user_online", ({ userId }) => {
+      setOnlineUsers((prev) => {
+        if (prev.includes(userId)) return prev;
+        return [...prev, userId];
+      });
+    });
+
+    socket.on("user_offline", ({ userId }) => {
+      setOnlineUsers((prev) => prev.filter((id) => id !== userId));
+    });
+
+    return () => {
+      socket.off("online_users_list");
+      socket.off("user_online");
+      socket.off("user_offline");
+    };
+  }, [socket]);
+
+  useEffect(() => {
     if (socket && selectedChat?._id) {
       socket.emit("join_chat", selectedChat._id);
     }
@@ -195,21 +250,54 @@ const Dashboard = () => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("receive_message", (message) => {
-      if (message.chatId === selectedChat?._id) {
+    socket.on("receive_message", async (message) => {
+      const isCurrentChat = selectedChatRef.current?._id === message.chatId;
+
+      if (isCurrentChat) {
         setMessages((prev) => [...prev, message]);
+
+        setChatList((prev) =>
+          prev.map((chat) =>
+            chat._id === message.chatId ? { ...chat, unreadCount: 0 } : chat,
+          ),
+        );
+
+        await markAsRead(message._id);
       }
     });
 
     return () => socket.off("receive_message");
-  }, [socket]);
+  }, [socket, selectedChat]);
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
 
+    const messageText = newMessage;
+
     socket.emit("send_message", {
       chatId: selectedChat._id,
       content: newMessage,
+    });
+
+    setChatList((prev) => {
+      const updated = prev.map((chat) => {
+        if (chat._id === selectedChat._id) {
+          return {
+            ...chat,
+            lastMessage: {
+              text: messageText,
+              createdAt: new Date(),
+            },
+            updatedAt: new Date(),
+            unreadCount: 0,
+          };
+        }
+        return chat;
+      });
+
+      updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+      return updated;
     });
 
     setNewMessage("");
@@ -222,16 +310,21 @@ const Dashboard = () => {
       setChatList((prev) => {
         const updated = prev.map((chat) => {
           if (chat._id === data.chatId) {
-            const isCurrentChat = selectedChat?._id === data.chatId;
+            const isCurrentChat = selectedChatRef.current?._id === data.chatId;
+            const isMyMessage = data.senderId === userData.userId;
 
             return {
               ...chat,
               lastMessage: {
-                content: data.lastMessage.text,
+                text: data.lastMessage.text,
                 createdAt: data.lastMessage.createdAt,
               },
               updatedAt: data.lastMessage.createdAt,
-              unreadCount: isCurrentChat ? 0 : (chat.unreadCount || 0) + 1,
+              unreadCount: isCurrentChat
+                ? 0
+                : isMyMessage
+                  ? chat.unreadCount
+                  : (chat.unreadCount || 0) + 1,
             };
           }
           return chat;
@@ -245,6 +338,80 @@ const Dashboard = () => {
 
     return () => socket.off("chat_updated");
   }, [socket]);
+
+  const groupMessagesByDate = (messages) => {
+    const groups = {};
+
+    messages.forEach((msg) => {
+      const date = dayjs(msg.createdAt);
+
+      let label = "";
+
+      if (date.isSame(dayjs(), "day")) {
+        label = "Today";
+      } else if (date.isSame(dayjs().subtract(1, "day"), "day")) {
+        label = "Yesterday";
+      } else {
+        label = date.format("DD MMM YYYY");
+      }
+
+      if (!groups[label]) {
+        groups[label] = [];
+      }
+
+      groups[label].push(msg);
+    });
+
+    return groups;
+  };
+
+  const groupByMinute = (messages) => {
+    const result = [];
+
+    let temp = [];
+
+    messages.forEach((msg, index) => {
+      if (temp.length === 0) {
+        temp.push(msg);
+      } else {
+        const last = temp[temp.length - 1];
+
+        const sameMinute = dayjs(last.createdAt).isSame(
+          dayjs(msg.createdAt),
+          "minute",
+        );
+
+        const sameSender = last.sender._id === msg.sender._id;
+
+        if (sameMinute && sameSender) {
+          temp.push(msg);
+        } else {
+          result.push([...temp]);
+          temp = [msg];
+        }
+      }
+
+      if (index === messages.length - 1) {
+        result.push([...temp]);
+      }
+    });
+
+    return result;
+  };
+
+  const groupedMessages = groupMessagesByDate(messages);
+
+  useEffect(() => {
+    const handleClickOutside = () => setShowEmoji(false);
+
+    if (showEmoji) {
+      document.addEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [showEmoji]);
 
   return (
     <section className="pageContainer">
@@ -312,7 +479,7 @@ const Dashboard = () => {
                       {chat.user?.fullName || ""}
                     </h3>
                     <p className="text-sm text-gray-400">
-                      {chat.lastMessage?.content || ""}
+                      {chat.lastMessage?.text || ""}
                     </p>
                   </div>
                   <div className="timeCont ml-auto h-full flex flex-col justify-start items-center gap-2">
@@ -360,7 +527,7 @@ const Dashboard = () => {
                           {chat.user?.fullName || ""}
                         </h3>
                         <p className="text-sm text-gray-400">
-                          {chat.lastMessage?.content || ""}
+                          {chat.lastMessage?.text || ""}
                         </p>
                       </div>
                       <div className="timeCont ml-auto h-full flex flex-col justify-start items-center gap-2">
@@ -419,12 +586,16 @@ const Dashboard = () => {
                     alt="user"
                     className="w-full h-full object-cover"
                   />
-                  <div className="status bg-green-400 w-3.5 h-3.5 rounded-full absolute bottom-0 right-1 z-1"></div>
+                  {isOnline && (
+                    <div className="status bg-green-400 w-3.5 h-3.5 rounded-full absolute bottom-0 right-1 z-1"></div>
+                  )}
                 </div>
                 <div className="userInfo h-full flex flex-col justify-center gap-1">
                   <h3 className="text-lg font-semibold text-white">
                     {selectedChat?.user?.fullName || "Divya Sonar"}
-                    <p className="text-sm text-[#9D4EDB]">Online</p>
+                    {isOnline && (
+                      <p className="text-sm text-[#9D4EDB]">Online</p>
+                    )}
                   </h3>
                 </div>
               </div>
@@ -432,37 +603,88 @@ const Dashboard = () => {
                 <img src="/images/png/option.png" alt="" />
               </div>
             </div>
-            <div className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 flex-1 overflow-auto hide-scrollbar">
-              <div className={`messageBox otherMessage`}>
-                <p>
-                  Hello world, How are you? Lorem ipsum dolor sit, amet
-                  consectetur adipisicing elit. Doloremque totam repellendus
-                  sed, eveniet reprehenderit adipisci veritatis molestiae facere
-                  tenetur at ex quidem officia aut dolores hic facilis placeat
-                  reiciendis accusantium saepe necessitatibus et aliquam
-                  distinctio. Delectus ea officia unde aperiam minus ex amet
-                  corrupti animi nemo, provident, incidunt fugiat velit.
-                </p>
-                <div className="timebox flex items-center justify-end text-gray-400">
-                  02:33 pm
-                </div>
-              </div>
-              <div className={`messageBox myMessage`}>
-                <p>
-                  Hello world, How are you? Lorem ipsum dolor sit, amet
-                  consectetur adipisicing elit. Doloremque totam repellendus
-                  sed, eveniet reprehenderit adipisci veritatis molestiae facere
-                  tenetur at ex quidem officia aut dolores hic facilis placeat
-                  reiciendis accusantium saepe necessitatibus et aliquam
-                  distinctio. Delectus ea officia unde aperiam minus ex amet
-                  corrupti animi nemo, provident, incidunt fugiat velit.
-                </p>
-                <div className="timebox flex items-center justify-end text-black">
-                  02:33 pm
-                </div>
-              </div>
+            <div
+              ref={chatContainerRef}
+              className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 flex-1 overflow-auto hide-scrollbar"
+            >
+              {Object.entries(groupedMessages).map(([dateLabel, msgs]) => {
+                const minuteGroups = groupByMinute(msgs);
+                return (
+                  <div key={dateLabel}>
+                    {/* DATE LABEL */}
+                    <div className="flex justify-center my-3">
+                      <span className="bg-[#2F1E3C] text-gray-300 text-xs px-3 py-1 rounded-full">
+                        {dateLabel}
+                      </span>
+                    </div>
+
+                    {/* MESSAGE GROUPS */}
+                    {minuteGroups.map((group, i) => {
+                      const lastMsg = group[group.length - 1];
+
+                      return (
+                        <div key={i} className="flex flex-col gap-1">
+                          {group.map((msg, idx) => {
+                            const isMe = msg.sender._id === userData?.userId;
+                            const isLast = idx === group.length - 1;
+                            return (
+                              <>
+                                <div
+                                  key={msg._id}
+                                  className={`flex flex-col mb-2 ${
+                                    isMe ? "items-end" : "items-start"
+                                  }`}
+                                >
+                                  <div
+                                    className={`messageBox ${
+                                      isMe ? "myMessage" : "otherMessage"
+                                    }`}
+                                  >
+                                    <p className="messageContent">{msg.text}</p>
+                                  </div>
+                                  {isLast && (
+                                    <div
+                                      className={`timebox text-xs mt-1 ${
+                                        isMe
+                                          ? "self-end text-right"
+                                          : "self-start text-left"
+                                      }`}
+                                    >
+                                      {dayjs(lastMsg.createdAt).format(
+                                        "hh:mm A",
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
             </div>
             <div className="inputBox w-full flex items-center justify-between gap-3 py-3 px-6">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowEmoji((prev) => !prev);
+                }}
+                className="text-2xl cursor-pointer"
+              >
+                😊
+              </button>
+              {showEmoji && (
+                <div
+                  className="absolute bottom-16 left-35 z-50"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <EmojiPicker theme="dark" onEmojiClick={handleEmojiClick} />
+                </div>
+              )}
               <CustomFormInput
                 type="text"
                 placeholder="Type a message"
@@ -470,6 +692,12 @@ const Dashboard = () => {
                 parentClass="w-full"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
               />
               <button
                 onClick={handleSendMessage}

@@ -131,7 +131,7 @@ exports.getChatList = asyncHandler(async (req, res) => {
                 },
                 lastMessage: {
                     _id: "$lastMessage._id",
-                    content: "$lastMessage.text",
+                    text: "$lastMessage.text",
                     createdAt: "$lastMessage.createdAt",
                     sender: {
                         _id: "$lastMessage.sender._id",
@@ -317,7 +317,7 @@ exports.getChatMessages = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                content: "$text",
+                text: "$text",
                 createdAt: 1,
                 sender: {
                     _id: "$sender._id",

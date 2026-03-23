@@ -34,7 +34,7 @@ const Login = () => {
           email: data.user.email,
           role: data.user.role,
         };
-        encryptAndStoreLocal("userData", { userData: userData });
+        encryptAndStoreLocal("userData", userData);
         navigate("/dashboard");
       },
       (err) => {},

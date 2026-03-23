@@ -5,6 +5,7 @@ const config = require("../config/config");
 const Chat = require("../model/chat.model");
 
 let io;
+const onlineUsers = new Map();
 
 const initSocket = (server) => {
     io = new Server(server, {
@@ -17,24 +18,51 @@ const initSocket = (server) => {
     io.use(socketAuth);
 
     io.on("connection", (socket) => {
+        const userId = socket.user.id;
         console.log("🟢 Connected:", socket.user.id);
 
-        socket.join(socket.user.id);
+        if (!onlineUsers.has(userId)) {
+            onlineUsers.set(userId, new Set());
+        }
+
+        onlineUsers.get(userId).add(socket.id);
+
+        // join personal room
+        socket.join(userId);
+
+        // broadcast online
+        io.emit("user_online", { userId });
 
         socket.on("join_chat", (chatId) => {
             socket.join(chatId);
-            console.log(`User ${socket.user.id} joined chat ${chatId}`);
+        });
+
+        socket.on("get_online_users", () => {
+            socket.emit("online_users_list", Array.from(onlineUsers.keys()));
         });
 
         socket.on("send_message", async (data) => {
             try {
                 const { chatId, content } = data;
 
+                const chat = await Chat.findById(chatId);
+
+                const socketsInRoom = await io.in(chatId).fetchSockets();
+                const activeUserIds = socketsInRoom.map(s => s.user.id.toString());
+
+                let seenBy = [socket.user.id];
+
+                chat.members.forEach(memberId => {
+                    if (activeUserIds.includes(memberId.toString())) {
+                        seenBy.push(memberId.toString());
+                    }
+                });
+
                 const newMessage = await Message.create({
-                    chatId: chatId,
+                    chatId,
                     sender: socket.user.id,
                     text: content,
-                    seenBy: [socket.user.id]
+                    seenBy
                 });
 
                 await Chat.findByIdAndUpdate(chatId, {
@@ -82,8 +110,6 @@ const initSocket = (server) => {
 
                 const finalMessage = messageData[0];
 
-                const chat = await Chat.findById(chatId);
-
                 io.to(chatId).emit("receive_message", finalMessage);
 
                 chat.members.forEach((memberId) => {
@@ -93,14 +119,25 @@ const initSocket = (server) => {
                         senderId: socket.user.id
                     });
                 });
-                
+
             } catch (err) {
                 console.error(err);
             }
         });
 
         socket.on("disconnect", () => {
-            console.log("🔴 Disconnected:", socket.user.id);
+            console.log("🔴 Disconnected:", userId);
+
+            if (onlineUsers.has(userId)) {
+                const userSockets = onlineUsers.get(userId);
+
+                userSockets.delete(socket.id);
+
+                if (userSockets.size === 0) {
+                    onlineUsers.delete(userId);
+                    io.emit("user_offline", { userId });
+                }
+            }
         });
     });
 

@@ -162,46 +162,23 @@ a {
 
 .chatBox {
   .messageBox {
-    position: relative;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 10px;
     max-width: 60%;
-    text-wrap: wrap;
+    padding: 0px 8px;
+    border-radius: 10px;
+    word-break: break-word;
 
-    &.otherMessage {
-      background-color: $messageColor;
-
-      &::after {
-        content: "";
-        position: absolute;
-        left: -5px; /* Position the tail on the left edge */
-        bottom: 0px;
-        width: 0;
-        height: 0;
-        /* The "CSS triangle trick" */
-        border-top: 8px solid transparent;
-        border-bottom: 8px solid transparent;
-        border-right: 10px solid $messageColor;
-      }
+    .messageContent {
+      padding: 0.5rem;
     }
 
     &.myMessage {
       background-color: $messageColor2;
-      align-self: flex-end;
+      border-top-right-radius: 0;
+    }
 
-      &::after {
-        content: "";
-        position: absolute;
-        right: -5px;
-        bottom: 0px;
-        width: 0;
-        height: 0;
-        /* The "CSS triangle trick" to create the arrow shape */
-        border-top: 8px solid transparent;
-        border-bottom: 8px solid transparent;
-        border-left: 10px solid $messageColor2;
-      }
+    &.otherMessage {
+      background-color: $messageColor;
+      border-top-left-radius: 0;
     }
   }
 }
