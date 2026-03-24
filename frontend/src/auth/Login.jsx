@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 import { useForm } from "react-hook-form";
 import CustomFormInput from "../component/CustomFormInput";
 import { Link, useNavigate } from "react-router-dom";
@@ -40,6 +40,24 @@ const Login = () => {
       (err) => {},
     );
   };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      const token = tokenResponse.access_token;
+
+      await requestHandler(
+        async () => await loginAndRegisterWithGoogle({ token }),
+        setLoading,
+        (res) => {
+          toast.success(res.message);
+          encryptAndStoreLocal("token", { token: res.data.accessToken });
+          encryptAndStoreLocal("userData", res.data.user);
+          navigate("/dashboard");
+        },
+      );
+    },
+    onError: () => toast.error("Google Login Failed"),
+  });
 
   return (
     <section className="pageContainer">
@@ -137,9 +155,7 @@ const Login = () => {
                   <button
                     type="button"
                     className="p-3 flex items-center justify-center gap-2 cursor-pointer rounded-xl mt-4 bg-[#19002F] w-full"
-                    onClick={() =>
-                      document.querySelector('[role="button"]').click()
-                    }
+                    onClick={() => googleLogin()}
                     disabled={loading}
                   >
                     <img
@@ -150,36 +166,6 @@ const Login = () => {
                     />{" "}
                     Google
                   </button>
-                  <div style={{ position: "absolute", left: "-9999px" }}>
-                    <GoogleLogin
-                      style={{ display: "none" }}
-                      onSuccess={async (credentialResponse) => {
-                        const token = credentialResponse.credential;
-
-                        await requestHandler(
-                          async () =>
-                            await loginAndRegisterWithGoogle({ token }),
-                          setLoading,
-                          (res) => {
-                            toast.success(res.message);
-
-                            const { data } = res;
-
-                            encryptAndStoreLocal("token", {
-                              token: data.accessToken,
-                            });
-
-                            encryptAndStoreLocal("userData", {
-                              userData: data.user,
-                            });
-
-                            navigate("/dashboard");
-                          },
-                        );
-                      }}
-                      onError={() => toast.error("Google Login Failed")}
-                    />
-                  </div>
                 </div>
               </div>
             </div>
