@@ -10,7 +10,10 @@ const onlineUsers = new Map();
 const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: process.env.FRONTEND_URL,
+            origin: [
+                "http://localhost:5173",
+                "https://chatify-gauravsonar.netlify.app"
+            ],
             credentials: true,
         },
     });
