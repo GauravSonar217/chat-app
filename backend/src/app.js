@@ -11,19 +11,16 @@ const errorMiddleware = require("./middleware/error.middleware.js");
 
 const app = express();
 
-const allowedOrigins = [
-    "http://localhost:5173",
-    "https://chatify-gauravsonar.netlify.app"
-];
-
 app.use(cors({
-    origin: allowedOrigins,
+    origin: [
+        "http://localhost:5173",
+        "https://chatify-gauravsonar.netlify.app"
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-app.options("*", cors());
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(cookieParser());
