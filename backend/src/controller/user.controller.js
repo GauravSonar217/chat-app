@@ -4,6 +4,7 @@ const sendEmail = require('../utils/sendEmail');
 const { OAuth2Client } = require("google-auth-library");
 const config = require("../config/config");
 const client = new OAuth2Client(config.googleClientId);
+const axios = require("axios");
 
 const {
 	ApiError,
@@ -134,14 +135,16 @@ exports.loginUser = asyncHandler(async (req, res) => {
 exports.googleLogin = asyncHandler(async (req, res) => {
 	const { token } = req.body;
 
-	const ticket = await client.verifyIdToken({
-		idToken: token,
-		audience: config.googleClientId
-	})
+	const googleRes = await axios.get(
+		"https://www.googleapis.com/oauth2/v3/userinfo",
+		{
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		}
+	);
 
-	const payload = ticket.getPayload();
-
-	const { email, name } = payload;
+	const { email, name } = googleRes.data;
 
 	let user = await User.findOne({ email });
 
@@ -176,7 +179,7 @@ exports.googleLogin = asyncHandler(async (req, res) => {
 
 exports.logoutUser = asyncHandler(async (req, res) => {
 	const refreshToken = req.cookies.refreshToken;
-	
+
 	if (!refreshToken) {
 		return res.status(200).json(new ApiResponse({
 			message: "User already logged out"
