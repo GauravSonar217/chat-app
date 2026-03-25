@@ -412,7 +412,6 @@ const Dashboard = () => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, [showEmoji]);
-
   return (
     <section className="pageContainer">
       <div className="sidebarChatList w-[600px] h-full p-4 flex flex-col">

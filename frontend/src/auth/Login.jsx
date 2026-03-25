@@ -51,7 +51,18 @@ const Login = () => {
         (res) => {
           toast.success(res.message);
           encryptAndStoreLocal("token", { token: res.data.accessToken });
-          encryptAndStoreLocal("userData", res.data.user);
+
+          const user = res.data.user;
+
+          const userData = {
+            userId: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+          };
+
+          encryptAndStoreLocal("userData", userData);
+
           navigate("/dashboard");
         },
       );
