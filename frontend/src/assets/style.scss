@@ -136,6 +136,10 @@ a {
   color: $white;
   @include flex-center;
 
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+
   .login-card {
     width: 600px;
     border: 1px solid $border-color;
@@ -149,6 +153,10 @@ a {
     h2 {
       font-size: 2.5rem;
       font-weight: 600;
+
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
     }
   }
 }
@@ -180,5 +188,29 @@ a {
       background-color: $messageColor;
       border-top-left-radius: 0;
     }
+  }
+}
+
+.sidebarChatList {
+  width: 500px;
+  @media (max-width: 768px) {
+    width: 100%;
+    position: absolute;
+    z-index: 10;
+    background: $dark;
+  }
+}
+
+.mobileFull {
+  width: 100%;
+  height: 100vh;
+  transition: all 0.3s ease;
+}
+
+.chatArea {
+  flex: 1;
+
+  @media (max-width: 768px) {
+    width: 100%;
   }
 }

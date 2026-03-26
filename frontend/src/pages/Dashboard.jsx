@@ -12,9 +12,10 @@ import {
   userLogout,
 } from "../controller";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useSocket from "../hooks/useSocket";
 import CustomFormInput from "../component/CustomFormInput";
+import { getProfileImage } from "../helper/common";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(false);
@@ -40,12 +41,19 @@ const Dashboard = () => {
   const [hasMoreChats, setHasMoreChats] = useState(true);
   const [hasMoreUsers, setHasMoreUsers] = useState(true);
   const onlineUsersSet = new Set(onlineUsers);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const isOnline = onlineUsersSet.has(selectedChat?.user?._id);
   const selectedChatRef = useRef(null);
 
   useEffect(() => {
     selectedChatRef.current = selectedChat;
   }, [selectedChat]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleEmojiClick = (emojiData) => {
     setNewMessage((prev) => prev + emojiData.emoji);
@@ -262,7 +270,7 @@ const Dashboard = () => {
           ),
         );
 
-        await markAsRead(message._id);
+        await markAsRead(message.chatId);
       }
     });
 
@@ -414,109 +422,406 @@ const Dashboard = () => {
   }, [showEmoji]);
   return (
     <section className="pageContainer">
-      <div className="sidebarChatList w-[600px] h-full p-4 flex flex-col">
-        <div className="sidebarHeader w-full flex items-center justify-between">
-          <div className="logoCont">
-            <img src="/images/png/logo.png" alt="" />
-          </div>
-          <div
-            className="flex items-center px-1 justify-between gap-10 relative cursor-pointer"
-            onClick={() => setShowDropdown(!showDropdown)}
-          >
-            <img src="/images/png/option.png" alt="" />
-            {showDropdown && (
-              <div className="bg-[#2F1E3C] text-white absolute w-40 right-0 top-6 rounded-xl">
-                <ul className="flex flex-col">
-                  <li className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl">
-                    My Profile
-                  </li>
-                  <li className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl">
-                    Settings
-                  </li>
-                  <li
-                    className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl"
-                    onClick={handleLogout}
-                  >
-                    Logout
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="searchBarCont border border-gray-600 bg-[#202020] rounded-xl px-4 mt-3 flex items-center gap-1">
-          <img src="/images/png/search.png" alt="" className="w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search"
-            className="w-full outline-0 p-3"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-        </div>
-        <div
-          onScroll={handleScroll}
-          className="chatListCont mt-3 flex flex-col gap-2 flex-1 overflow-auto hide-scrollbar"
-        >
-          {!debouncedText && (
-            <>
-              {chatList.map((chat) => (
+      {isMobile ? (
+        <>
+          {!selectedChat && (
+            <div className="sidebarChatList mobileFull h-full p-4 flex flex-col">
+              <div className="sidebarHeader w-full flex items-center justify-between">
+                <div className="logoCont">
+                  <img src="/images/png/logo.png" alt="" />
+                </div>
                 <div
-                  key={chat._id}
-                  className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
-                  onClick={() => handleSelectChat(chat)}
+                  className="flex items-center px-1 justify-between gap-10 relative cursor-pointer"
+                  onClick={() => setShowDropdown(!showDropdown)}
                 >
-                  <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
-                    <img
-                      src="/images/png/user.png"
-                      alt="user"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="userInfo h-full flex flex-col justify-center gap-1 max-w-80">
-                    <h3 className="text-lg font-semibold text-white">
-                      {chat.user?.fullName || ""}
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      {chat.lastMessage?.text || ""}
-                    </p>
-                  </div>
-                  <div className="timeCont ml-auto h-full flex flex-col justify-start items-center gap-2">
-                    <h5 className="text-sm text-gray-400">
-                      {dayjs(chat.updatedAt).isSame(dayjs(), "day")
-                        ? dayjs(chat.updatedAt).format("hh:mm A")
-                        : dayjs(chat.updatedAt).format("DD/MM/YYYY")}
-                    </h5>
-                    {chat.unreadCount > 0 && (
-                      <span className="count bg-[#9D4EDB] text-md font-semibold w-7 h-7 rounded-full flex justify-center">
-                        {chat.unreadCount}
-                      </span>
+                  <img src="/images/png/option.png" alt="" />
+                  {showDropdown && (
+                    <div className="bg-[#2F1E3C] text-white absolute w-40 right-0 top-6 rounded-xl">
+                      <ul className="flex flex-col">
+                        <Link
+                          to="/my-profile"
+                          className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl"
+                        >
+                          My Profile
+                        </Link>
+                        <li className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl">
+                          Settings
+                        </li>
+                        <li
+                          className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl"
+                          onClick={handleLogout}
+                        >
+                          Logout
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="searchBarCont border border-gray-600 bg-[#202020] rounded-xl px-4 mt-3 flex items-center gap-1">
+                <img src="/images/png/search.png" alt="" className="w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="w-full outline-0 p-3"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                />
+              </div>
+              <div
+                onScroll={handleScroll}
+                className="chatListCont mt-3 flex flex-col gap-2 flex-1 overflow-auto hide-scrollbar"
+              >
+                {!debouncedText && (
+                  <>
+                    {chatList.map((chat) => (
+                      <div
+                        key={chat._id}
+                        className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
+                        onClick={() => handleSelectChat(chat)}
+                      >
+                        <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
+                          <img
+                            src={getProfileImage(chat.user?.avatar)}
+                            alt="user"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="userInfo h-full flex flex-col justify-center gap-1 max-w-80">
+                          <h3 className="text-lg font-semibold text-white">
+                            {chat.user?.fullName || ""}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {chat.lastMessage?.text || ""}
+                          </p>
+                        </div>
+                        <div className="timeCont ml-auto h-full flex flex-col justify-start items-center gap-2">
+                          <h5 className="text-sm text-gray-400">
+                            {dayjs(chat.updatedAt).isSame(dayjs(), "day")
+                              ? dayjs(chat.updatedAt).format("hh:mm A")
+                              : dayjs(chat.updatedAt).format("DD/MM/YYYY")}
+                          </h5>
+                          {chat.unreadCount > 0 && (
+                            <span className="count bg-[#9D4EDB] text-md font-semibold w-7 h-7 rounded-full flex justify-center">
+                              {chat.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {chatList.length === 0 && filteredUsers.length === 0 && (
+                  <p className="text-gray-400 text-center mt-4">
+                    No results found
+                  </p>
+                )}
+
+                {debouncedText && (
+                  <>
+                    {/* Chats */}
+                    {chatList.length > 0 && (
+                      <>
+                        <h2 className="font-semibold text-gray-200">Chats</h2>
+                        {chatList.map((chat) => (
+                          <div
+                            key={chat._id}
+                            onClick={() => handleSelectChat(chat)}
+                            className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
+                          >
+                            <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
+                              <img
+                                src={getProfileImage(chat.user?.avatar)}
+                                alt="user"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="userInfo h-full flex flex-col justify-center gap-1 max-w-80">
+                              <h3 className="text-lg font-semibold text-white">
+                                {chat.user?.fullName || ""}
+                              </h3>
+                              <p className="text-sm text-gray-400">
+                                {chat.lastMessage?.text || ""}
+                              </p>
+                            </div>
+                            <div className="timeCont ml-auto h-full flex flex-col justify-start items-center gap-2">
+                              <h5 className="text-sm text-gray-400">
+                                {dayjs(chat.updatedAt).isSame(dayjs(), "day")
+                                  ? dayjs(chat.updatedAt).format("hh:mm A")
+                                  : dayjs(chat.updatedAt).format("DD/MM/YYYY")}
+                              </h5>
+                              {chat.unreadCount > 0 && (
+                                <span className="count bg-[#9D4EDB] text-md font-semibold w-7 h-7 rounded-full flex justify-center">
+                                  {chat.unreadCount}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </>
                     )}
+
+                    {/* Contacts */}
+                    {filteredUsers.length > 0 && (
+                      <>
+                        <h2 className="font-semibold text-gray-200">
+                          Contacts
+                        </h2>
+                        {filteredUsers.map((user) => (
+                          <div
+                            key={user._id}
+                            onClick={() => handleOpenChat(user._id)}
+                            className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
+                          >
+                            <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
+                              <img
+                                src={getProfileImage(user.avatar)}
+                                alt="user"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="userInfo h-full flex flex-col justify-center gap-1 max-w-80">
+                              <h3 className="text-lg font-semibold text-white">
+                                {user.fullName || ""}
+                              </h3>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {selectedChat && (
+            <div className="chatArea mobileFull w-full h-full">
+              {selectedChat && (
+                <div className="chatCont border-s border-gray-600 w-full h-full flex flex-col">
+                  <div className="chatHeader w-full flex items-center justify-between border-b border-gray-600 p-3 px-6">
+                    <div className="flex items-center gap-3">
+                      {isMobile && (
+                        <button onClick={() => setSelectedChat(null)}>
+                          <img src="/images/png/back.png" className="w-5 cursor-pointer" alt="" />
+                        </button>
+                      )}
+                      <div className="profileBox relative w-15 h-15 rounded-full">
+                        <img
+                          src={getProfileImage(selectedChat?.user?.avatar)}
+                          alt="user"
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                        {isOnline && (
+                          <div className="status bg-green-400 w-3.5 h-3.5 rounded-full absolute bottom-0 right-1 z-1"></div>
+                        )}
+                      </div>
+                      <div className="userInfo h-full flex flex-col justify-center gap-1">
+                        <h3 className="text-lg font-semibold text-white">
+                          {selectedChat?.user?.fullName || "Divya Sonar"}
+                          {isOnline && (
+                            <p className="text-sm text-[#9D4EDB]">Online</p>
+                          )}
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="actionBox">
+                      <img src="/images/png/option.png" alt="" />
+                    </div>
+                  </div>
+                  <div
+                    ref={chatContainerRef}
+                    className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 flex-1 overflow-auto hide-scrollbar"
+                  >
+                    {Object.entries(groupedMessages).map(
+                      ([dateLabel, msgs]) => {
+                        const minuteGroups = groupByMinute(msgs);
+                        return (
+                          <div key={dateLabel}>
+                            {/* DATE LABEL */}
+                            <div className="flex justify-center my-3">
+                              <span className="bg-[#2F1E3C] text-gray-300 text-xs px-3 py-1 rounded-full">
+                                {dateLabel}
+                              </span>
+                            </div>
+
+                            {/* MESSAGE GROUPS */}
+                            {minuteGroups.map((group, i) => {
+                              const lastMsg = group[group.length - 1];
+
+                              return (
+                                <div key={i} className="flex flex-col gap-1">
+                                  {group.map((msg, idx) => {
+                                    const isMe =
+                                      msg.sender._id === userData?.userId;
+                                    const isLast = idx === group.length - 1;
+                                    return (
+                                      <>
+                                        <div
+                                          key={msg._id}
+                                          className={`flex flex-col mb-2 ${
+                                            isMe ? "items-end" : "items-start"
+                                          }`}
+                                        >
+                                          <div
+                                            className={`messageBox ${
+                                              isMe
+                                                ? "myMessage"
+                                                : "otherMessage"
+                                            }`}
+                                          >
+                                            <p className="messageContent">
+                                              {msg.text}
+                                            </p>
+                                          </div>
+                                          {isLast && (
+                                            <div
+                                              className={`timebox text-xs mt-1 ${
+                                                isMe
+                                                  ? "self-end text-right"
+                                                  : "self-start text-left"
+                                              }`}
+                                            >
+                                              {dayjs(lastMsg.createdAt).format(
+                                                "hh:mm A",
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      },
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                  <div className="inputBox w-full flex items-center justify-between gap-3 py-3 px-6">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowEmoji((prev) => !prev);
+                      }}
+                      className="text-2xl cursor-pointer"
+                    >
+                      😊
+                    </button>
+                    {showEmoji && (
+                      <div
+                        className="absolute bottom-16 left-35 z-50"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <EmojiPicker
+                          theme="dark"
+                          onEmojiClick={handleEmojiClick}
+                        />
+                      </div>
+                    )}
+                    <CustomFormInput
+                      type="text"
+                      placeholder="Type a message"
+                      className="w-ful rounded-lg"
+                      parentClass="w-full"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      className="cursor-pointer bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] w-12 h-12 rounded-full flex items-center justify-center"
+                    >
+                      <img
+                        src="/images/png/send.png"
+                        alt=""
+                        width={20}
+                        height={20}
+                      />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </>
+              )}
+              {!selectedChat && (
+                <div className="imgCont border-s border-gray-600 w-full h-full flex items-center justify-center">
+                  <img
+                    src="/images/png/chatbot.png"
+                    alt=""
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )}
+            </div>
           )}
-
-          {chatList.length === 0 && filteredUsers.length === 0 && (
-            <p className="text-gray-400 text-center mt-4">No results found</p>
-          )}
-
-          {debouncedText && (
-            <>
-              {/* Chats */}
-              {chatList.length > 0 && (
+        </>
+      ) : (
+        <>
+          <div className="sidebarChatList h-full p-4 flex flex-col">
+            <div className="sidebarHeader w-full flex items-center justify-between">
+              <div className="logoCont">
+                <img src="/images/png/logo.png" alt="" />
+              </div>
+              <div
+                className="flex items-center px-1 justify-between gap-10 relative cursor-pointer"
+                onClick={() => setShowDropdown(!showDropdown)}
+              >
+                <img src="/images/png/option.png" alt="" />
+                {showDropdown && (
+                  <div className="bg-[#2F1E3C] text-white absolute w-40 right-0 top-6 rounded-xl">
+                    <ul className="flex flex-col">
+                      <Link
+                        to="/my-profile"
+                        className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl"
+                      >
+                        My Profile
+                      </Link>
+                      <li className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl">
+                        Settings
+                      </li>
+                      <li
+                        className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl"
+                        onClick={handleLogout}
+                      >
+                        Logout
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="searchBarCont border border-gray-600 bg-[#202020] rounded-xl px-4 mt-3 flex items-center gap-1">
+              <img src="/images/png/search.png" alt="" className="w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search"
+                className="w-full outline-0 p-3"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+            </div>
+            <div
+              onScroll={handleScroll}
+              className="chatListCont mt-3 flex flex-col gap-2 flex-1 overflow-auto hide-scrollbar"
+            >
+              {!debouncedText && (
                 <>
-                  <h2 className="font-semibold text-gray-200">Chats</h2>
                   {chatList.map((chat) => (
                     <div
                       key={chat._id}
-                      onClick={() => handleSelectChat(chat)}
                       className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
+                      onClick={() => handleSelectChat(chat)}
                     >
                       <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
                         <img
-                          src="/images/png/user.png"
+                          src={getProfileImage(chat.user?.avatar)}
                           alt="user"
                           className="w-full h-full object-cover"
                         />
@@ -535,188 +840,253 @@ const Dashboard = () => {
                             ? dayjs(chat.updatedAt).format("hh:mm A")
                             : dayjs(chat.updatedAt).format("DD/MM/YYYY")}
                         </h5>
-                        <span className="count bg-[#9D4EDB] text-md font-semibold w-7 h-7 rounded-full flex justify-center">
-                          2
-                        </span>
+                        {chat.unreadCount > 0 && (
+                          <span className="count bg-[#9D4EDB] text-md font-semibold w-7 h-7 rounded-full flex justify-center">
+                            {chat.unreadCount}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
                 </>
               )}
 
-              {/* Contacts */}
-              {filteredUsers.length > 0 && (
+              {chatList.length === 0 && filteredUsers.length === 0 && (
+                <p className="text-gray-400 text-center mt-4">
+                  No results found
+                </p>
+              )}
+
+              {debouncedText && (
                 <>
-                  <h2 className="font-semibold text-gray-200">Contacts</h2>
-                  {filteredUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      onClick={() => handleOpenChat(user._id)}
-                      className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
-                    >
-                      <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
-                        <img
-                          src="/images/png/user.png"
-                          alt="user"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="userInfo h-full flex flex-col justify-center gap-1 max-w-80">
-                        <h3 className="text-lg font-semibold text-white">
-                          {user.fullName || ""}
-                        </h3>
-                      </div>
-                    </div>
-                  ))}
+                  {/* Chats */}
+                  {chatList.length > 0 && (
+                    <>
+                      <h2 className="font-semibold text-gray-200">Chats</h2>
+                      {chatList.map((chat) => (
+                        <div
+                          key={chat._id}
+                          onClick={() => handleSelectChat(chat)}
+                          className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
+                        >
+                          <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
+                            <img
+                              src={getProfileImage(chat.user?.avatar)}
+                              alt="user"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="userInfo h-full flex flex-col justify-center gap-1 max-w-80">
+                            <h3 className="text-lg font-semibold text-white">
+                              {chat.user?.fullName || ""}
+                            </h3>
+                            <p className="text-sm text-gray-400">
+                              {chat.lastMessage?.text || ""}
+                            </p>
+                          </div>
+                          <div className="timeCont ml-auto h-full flex flex-col justify-start items-center gap-2">
+                            <h5 className="text-sm text-gray-400">
+                              {dayjs(chat.updatedAt).isSame(dayjs(), "day")
+                                ? dayjs(chat.updatedAt).format("hh:mm A")
+                                : dayjs(chat.updatedAt).format("DD/MM/YYYY")}
+                            </h5>
+                            {chat.unreadCount > 0 && (
+                              <span className="count bg-[#9D4EDB] text-md font-semibold w-7 h-7 rounded-full flex justify-center">
+                                {chat.unreadCount}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Contacts */}
+                  {filteredUsers.length > 0 && (
+                    <>
+                      <h2 className="font-semibold text-gray-200">Contacts</h2>
+                      {filteredUsers.map((user) => (
+                        <div
+                          key={user._id}
+                          onClick={() => handleOpenChat(user._id)}
+                          className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
+                        >
+                          <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
+                            <img
+                              src={getProfileImage(user.avatar)}
+                              alt="user"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="userInfo h-full flex flex-col justify-center gap-1 max-w-80">
+                            <h3 className="text-lg font-semibold text-white">
+                              {user.fullName || ""}
+                            </h3>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </>
               )}
-            </>
-          )}
-        </div>
-      </div>
-      <div className="chatArea w-full h-full">
-        {selectedChat && (
-          <div className="chatCont border-s border-gray-600 w-full h-full flex flex-col">
-            <div className="chatHeader w-full flex items-center justify-between border-b border-gray-600 p-3 px-6">
-              <div className="flex items-center gap-3">
-                <div className="profileBox relative w-15 h-15 rounded-full">
-                  <img
-                    src="/images/png/user.png"
-                    alt="user"
-                    className="w-full h-full object-cover"
-                  />
-                  {isOnline && (
-                    <div className="status bg-green-400 w-3.5 h-3.5 rounded-full absolute bottom-0 right-1 z-1"></div>
-                  )}
-                </div>
-                <div className="userInfo h-full flex flex-col justify-center gap-1">
-                  <h3 className="text-lg font-semibold text-white">
-                    {selectedChat?.user?.fullName || "Divya Sonar"}
-                    {isOnline && (
-                      <p className="text-sm text-[#9D4EDB]">Online</p>
-                    )}
-                  </h3>
-                </div>
-              </div>
-              <div className="actionBox">
-                <img src="/images/png/option.png" alt="" />
-              </div>
             </div>
-            <div
-              ref={chatContainerRef}
-              className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 flex-1 overflow-auto hide-scrollbar"
-            >
-              {Object.entries(groupedMessages).map(([dateLabel, msgs]) => {
-                const minuteGroups = groupByMinute(msgs);
-                return (
-                  <div key={dateLabel}>
-                    {/* DATE LABEL */}
-                    <div className="flex justify-center my-3">
-                      <span className="bg-[#2F1E3C] text-gray-300 text-xs px-3 py-1 rounded-full">
-                        {dateLabel}
-                      </span>
+          </div>
+          <div className="chatArea w-full h-full">
+            {selectedChat && (
+              <div className="chatCont border-s border-gray-600 w-full h-full flex flex-col">
+                <div className="chatHeader w-full flex items-center justify-between border-b border-gray-600 p-3 px-6">
+                  <div className="flex items-center gap-3">
+                    <div className="profileBox relative w-15 h-15 rounded-full">
+                      <img
+                        src={getProfileImage(selectedChat?.user?.avatar)}
+                        alt="user"
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                      {isOnline && (
+                        <div className="status bg-green-400 w-3.5 h-3.5 rounded-full absolute bottom-0 right-1 z-1"></div>
+                      )}
                     </div>
+                    <div className="userInfo h-full flex flex-col justify-center gap-1">
+                      <h3 className="text-lg font-semibold text-white">
+                        {selectedChat?.user?.fullName || "Divya Sonar"}
+                        {isOnline && (
+                          <p className="text-sm text-[#9D4EDB]">Online</p>
+                        )}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="actionBox">
+                    <img src="/images/png/option.png" alt="" />
+                  </div>
+                </div>
+                <div
+                  ref={chatContainerRef}
+                  className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 flex-1 overflow-auto hide-scrollbar"
+                >
+                  {Object.entries(groupedMessages).map(([dateLabel, msgs]) => {
+                    const minuteGroups = groupByMinute(msgs);
+                    return (
+                      <div key={dateLabel}>
+                        {/* DATE LABEL */}
+                        <div className="flex justify-center my-3">
+                          <span className="bg-[#2F1E3C] text-gray-300 text-xs px-3 py-1 rounded-full">
+                            {dateLabel}
+                          </span>
+                        </div>
 
-                    {/* MESSAGE GROUPS */}
-                    {minuteGroups.map((group, i) => {
-                      const lastMsg = group[group.length - 1];
+                        {/* MESSAGE GROUPS */}
+                        {minuteGroups.map((group, i) => {
+                          const lastMsg = group[group.length - 1];
 
-                      return (
-                        <div key={i} className="flex flex-col gap-1">
-                          {group.map((msg, idx) => {
-                            const isMe = msg.sender._id === userData?.userId;
-                            const isLast = idx === group.length - 1;
-                            return (
-                              <>
-                                <div
-                                  key={msg._id}
-                                  className={`flex flex-col mb-2 ${
-                                    isMe ? "items-end" : "items-start"
-                                  }`}
-                                >
-                                  <div
-                                    className={`messageBox ${
-                                      isMe ? "myMessage" : "otherMessage"
-                                    }`}
-                                  >
-                                    <p className="messageContent">{msg.text}</p>
-                                  </div>
-                                  {isLast && (
+                          return (
+                            <div key={i} className="flex flex-col gap-1">
+                              {group.map((msg, idx) => {
+                                const isMe =
+                                  msg.sender._id === userData?.userId;
+                                const isLast = idx === group.length - 1;
+                                return (
+                                  <>
                                     <div
-                                      className={`timebox text-xs mt-1 ${
-                                        isMe
-                                          ? "self-end text-right"
-                                          : "self-start text-left"
+                                      key={msg._id}
+                                      className={`flex flex-col mb-2 ${
+                                        isMe ? "items-end" : "items-start"
                                       }`}
                                     >
-                                      {dayjs(lastMsg.createdAt).format(
-                                        "hh:mm A",
+                                      <div
+                                        className={`messageBox ${
+                                          isMe ? "myMessage" : "otherMessage"
+                                        }`}
+                                      >
+                                        <p className="messageContent">
+                                          {msg.text}
+                                        </p>
+                                      </div>
+                                      {isLast && (
+                                        <div
+                                          className={`timebox text-xs mt-1 ${
+                                            isMe
+                                              ? "self-end text-right"
+                                              : "self-start text-left"
+                                          }`}
+                                        >
+                                          {dayjs(lastMsg.createdAt).format(
+                                            "hh:mm A",
+                                          )}
+                                        </div>
                                       )}
                                     </div>
-                                  )}
-                                </div>
-                              </>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-            <div className="inputBox w-full flex items-center justify-between gap-3 py-3 px-6">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowEmoji((prev) => !prev);
-                }}
-                className="text-2xl cursor-pointer"
-              >
-                😊
-              </button>
-              {showEmoji && (
-                <div
-                  className="absolute bottom-16 left-35 z-50"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <EmojiPicker theme="dark" onEmojiClick={handleEmojiClick} />
+                                  </>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
                 </div>
-              )}
-              <CustomFormInput
-                type="text"
-                placeholder="Type a message"
-                className="w-ful rounded-lg"
-                parentClass="w-full"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-              />
-              <button
-                onClick={handleSendMessage}
-                className="cursor-pointer bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] w-12 h-12 rounded-full flex items-center justify-center"
-              >
-                <img src="/images/png/send.png" alt="" width={20} height={20} />
-              </button>
-            </div>
+                <div className="inputBox w-full flex items-center justify-between gap-3 py-3 px-6">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEmoji((prev) => !prev);
+                    }}
+                    className="text-2xl cursor-pointer"
+                  >
+                    😊
+                  </button>
+                  {showEmoji && (
+                    <div
+                      className="absolute bottom-16 left-35 z-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <EmojiPicker
+                        theme="dark"
+                        onEmojiClick={handleEmojiClick}
+                      />
+                    </div>
+                  )}
+                  <CustomFormInput
+                    type="text"
+                    placeholder="Type a message"
+                    className="w-ful rounded-lg"
+                    parentClass="w-full"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    className="cursor-pointer bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] w-12 h-12 rounded-full flex items-center justify-center"
+                  >
+                    <img
+                      src="/images/png/send.png"
+                      alt=""
+                      width={20}
+                      height={20}
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
+            {!selectedChat && (
+              <div className="imgCont border-s border-gray-600 w-full h-full flex items-center justify-center">
+                <img
+                  src="/images/png/chatbot.png"
+                  alt=""
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
           </div>
-        )}
-        {!selectedChat && (
-          <div className="imgCont border-s border-gray-600 w-full h-full flex items-center justify-center">
-            <img
-              src="/images/png/chatbot.png"
-              alt=""
-              className="w-full h-full object-contain"
-            />
-          </div>
-        )}
-      </div>
+        </>
+      )}
     </section>
   );
 };

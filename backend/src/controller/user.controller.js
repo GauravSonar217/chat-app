@@ -486,6 +486,10 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
 				email: 1,
 				avatar: 1,
 				fullName: 1,
+				phoneNumber: 1,
+				role: 1,
+				createdAt: 1,
+				updatedAt: 1
 			}
 		},
 		{
@@ -520,4 +524,35 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
 		}
 	})
 	);
+});
+
+exports.getProfile = asyncHandler(async (req, res) => {
+	const user = await User.findById(req.user.id);
+
+	res.status(200).json(new ApiResponse({
+		message: "Profile fetched",
+		data: sanitizeUser(user)
+	}));
+});
+
+// PUT /user/profile
+exports.updateProfile = asyncHandler(async (req, res) => {
+	const userId = req.user.id;
+	const { fullName, phoneNumber } = req.body;
+
+	const updateData = {
+		...(fullName && { fullName }),
+		...(phoneNumber && { phoneNumber }),
+	};
+
+	if (req.file) {
+		updateData.avatar = req.file.path;
+	}
+
+	const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+
+	res.status(200).json(new ApiResponse({
+		message: "Profile updated successfully",
+		data: sanitizeUser(updatedUser)
+	}));
 });

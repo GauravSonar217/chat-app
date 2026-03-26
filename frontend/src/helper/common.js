@@ -1,4 +1,9 @@
 import dayjs from "dayjs";
+const dummyUser = "/images/png/dummy-user.png";
+
+export const getProfileImage = (imageUrl) => {
+  return imageUrl || dummyUser;
+};
 
 export const formatDate = (date, options = {}) => {
   if (!date) return "";

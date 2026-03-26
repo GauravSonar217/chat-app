@@ -117,6 +117,14 @@ export const userRegister = (data) => {
     return apiClient.post("/user/auth/register", data);
 }
 
+export const getProfile = () => {
+    return apiClient.get("/user/profile");
+}
+
+export const updateProfile = (data) => {
+    return apiClient.put("/user/profile-update", data);
+}
+
 export const userLogout = () => {
     return apiClient.post("/user/auth/logout");
 }

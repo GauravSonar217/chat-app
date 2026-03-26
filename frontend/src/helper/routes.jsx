@@ -1,10 +1,7 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "../auth/Login.jsx";
 import Register from "../auth/Register.jsx";
 import Dashboard from "../pages/Dashboard.jsx";
-import UserManagement from "../pages/UserManagement.jsx";
-import PodManagement from "../pages/PodManagement.jsx";
 import NotFound from "../pages/NotFound.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicRoute from "./PublicRoute.jsx";
@@ -12,6 +9,7 @@ import ForgetPassword from "../auth/ForgetPassword.jsx";
 import NewPassword from "../auth/NewPassword.jsx";
 import VerifyEmail from "../auth/VerifyEmail.jsx";
 import VerifyOtp from "../auth/VerifyOtp.jsx";
+import MyProfile from "../pages/MyProfile.jsx";
 
 const routeWrapper = (comp, isProtected = true) => {
   if (isProtected) {
@@ -50,13 +48,10 @@ const routes = [
     element: routeWrapper(<Dashboard />, true),
   },
   {
-    path: "/users",
-    element: routeWrapper(<UserManagement />, true),
+    path: "/my-profile",
+    element: routeWrapper(<MyProfile />, true),
   },
-  {
-    path: "/pods",
-    element: routeWrapper(<PodManagement />, true),
-  },
+  
   {
     path: "*",
     element: <NotFound />,

@@ -2,6 +2,7 @@ const express = require('express');
 const { userController } = require('../controller');
 const { registerSchema, loginSchema, verifyOTPSchema, sendOtpSchema } = require('../validator/user.validator');
 const validate = require('../middleware/validate');
+const upload = require('../middleware/upload');
 const auth = require('../middleware/auth.middleware').protect;
 
 const router = express.Router();
@@ -19,5 +20,7 @@ router.post("/auth/google", userController.googleLogin);
 
 // user routes
 router.get("/users", auth, userController.getAllUsers);
+router.get("/profile", auth, userController.getProfile);
+router.put("/profile-update", auth, upload.single("avatar"), userController.updateProfile);
 
 module.exports = router;

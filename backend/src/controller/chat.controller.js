@@ -70,7 +70,8 @@ exports.getChatList = asyncHandler(async (req, res) => {
                     {
                         $match: {
                             $expr: { $eq: ["$chatId", "$$chatId"] },
-                            seenBy: { $ne: userIdObj }
+                            seenBy: { $ne: userIdObj },
+                            sender: { $ne: userIdObj }
                         }
                     },
                     {
@@ -178,7 +179,7 @@ exports.getChatList = asyncHandler(async (req, res) => {
 exports.accessChat = asyncHandler(async (req, res) => {
 
     const currentUserId = convertToObjectId(req.user.id);
-    const { userId } = req.body;
+    const { userId, createIfNotExists = false } = req.body;
 
     if (!userId) {
         throw new ApiError({
