@@ -46,7 +46,9 @@ const MyProfile = () => {
     const formData = new FormData();
 
     formData.append("fullName", data.fullName);
-    formData.append("phoneNumber", data.phoneNumber);
+    if (data.phoneNumber) {
+      formData.append("phoneNumber", data.phoneNumber);
+    }
 
     if (selectedFile) {
       formData.append("avatar", selectedFile);
@@ -139,7 +141,7 @@ const MyProfile = () => {
                       parentClass="w-1/2 mt-3"
                       placeholder="Enter phone number"
                       {...register("phoneNumber", {
-                        required: "Phone number is required",
+                        // required: "Phone number is required",
                         pattern: {
                           value: /^[0-9]{7,15}$/,
                           message: "Enter a valid phone number (7-15 digits)",
