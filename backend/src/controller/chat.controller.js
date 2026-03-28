@@ -18,6 +18,7 @@ exports.getChatList = asyncHandler(async (req, res) => {
         {
             $match: {
                 members: userIdObj,
+                lastMessage: { $exists: true }
             }
         },
         {
@@ -236,6 +237,13 @@ exports.accessChat = asyncHandler(async (req, res) => {
         return res.status(200).json(new ApiResponse({
             message: "Chat fetched successfully",
             data: existingChat[0]
+        }));
+    }
+
+    if (!createIfNotExists) {
+        return res.status(200).json(new ApiResponse({
+            message: "Chat not found",
+            data: null
         }));
     }
 

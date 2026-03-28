@@ -16,9 +16,11 @@ import { Link, useNavigate } from "react-router-dom";
 import useSocket from "../hooks/useSocket";
 import CustomFormInput from "../component/CustomFormInput";
 import { getProfileImage } from "../helper/common";
+import { PulseLoader } from "react-spinners";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const userData = decryptAndGetLocal("userData");
@@ -144,17 +146,31 @@ const Dashboard = () => {
 
   const handleOpenChat = async (userId) => {
     await requestHandler(
-      async () => await accessChat({ userId }),
+      async () => await accessChat({ userId, createIfNotExists: false }),
       setLoading,
       async (res) => {
         const chat = res.data;
 
-        const otherUser = chat.members.find((m) => m._id !== userData._id);
+        if (!chat) {
+          setSelectedChat({
+            _id: null,
+            user: usersList.find((u) => u._id === userId),
+            isTemp: true,
+          });
+          setMessages([]);
+          return;
+        }
+
+        const otherUser = chat.members.find((m) => m._id !== userData.userId);
 
         setSelectedChat({
           ...chat,
           user: otherUser,
         });
+
+        setMessages([]);
+        setMessagesLoading(true);
+
         await getMessages(chat._id);
       },
       (err) => {},
@@ -163,6 +179,9 @@ const Dashboard = () => {
 
   const handleSelectChat = async (chat) => {
     setSelectedChat(chat);
+
+    setMessages([]);
+    setMessagesLoading(true);
 
     setChatList((prev) =>
       prev.map((c) => (c._id === chat._id ? { ...c, unreadCount: 0 } : c)),
@@ -179,7 +198,7 @@ const Dashboard = () => {
           page: 1,
           perPage: 20,
         }),
-      setLoading,
+      setMessagesLoading,
       (res) => {
         setMessages(res.data.messages.reverse());
       },
@@ -277,38 +296,66 @@ const Dashboard = () => {
     return () => socket.off("receive_message");
   }, [socket, selectedChat]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !socket) return;
 
-    const messageText = newMessage;
+    let chatId = selectedChat?._id;
 
-    socket.emit("send_message", {
-      chatId: selectedChat._id,
-      content: newMessage,
-    });
+    try {
+      if (!chatId) {
+        const res = await accessChat({
+          userId: selectedChat.user._id,
+          createIfNotExists: true,
+        });
 
-    setChatList((prev) => {
-      const updated = prev.map((chat) => {
-        if (chat._id === selectedChat._id) {
-          return {
-            ...chat,
-            lastMessage: {
-              text: messageText,
-              createdAt: new Date(),
-            },
-            updatedAt: new Date(),
-            unreadCount: 0,
-          };
-        }
-        return chat;
+        const { data } = res.data;
+
+        chatId = data._id;
+
+        const otherUser = data.members.find((m) => m._id !== userData.userId);
+
+        const newChatObj = {
+          ...data,
+          user: otherUser,
+          unreadCount: 0,
+        };
+
+        setSelectedChat(newChatObj);
+        setChatList((prev) => [newChatObj, ...prev]);
+      }
+
+      socket.emit("join_chat", chatId);
+
+      socket.emit("send_message", {
+        chatId,
+        content: newMessage,
       });
 
-      updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      setChatList((prev) => {
+        const updated = prev.map((chat) => {
+          if (chat._id === chatId) {
+            return {
+              ...chat,
+              lastMessage: {
+                text: newMessage,
+                createdAt: new Date(),
+              },
+              updatedAt: new Date(),
+              unreadCount: 0,
+            };
+          }
+          return chat;
+        });
 
-      return updated;
-    });
+        updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        return updated;
+      });
 
-    setNewMessage("");
+      setNewMessage("");
+    } catch (err) {
+      console.error("SEND MESSAGE ERROR:", err);
+      toast.error(err?.response?.data?.message || "Failed to send message");
+    }
   };
 
   useEffect(() => {
@@ -449,9 +496,16 @@ const Dashboard = () => {
                         </li>
                         <li
                           className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl"
-                          onClick={handleLogout}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLogout();
+                          }}
                         >
-                          Logout
+                          {loading ? (
+                            <PulseLoader size={10} color="#fff" />
+                          ) : (
+                            "Logout"
+                          )}
                         </li>
                       </ul>
                     </div>
@@ -623,7 +677,7 @@ const Dashboard = () => {
                       </div>
                       <div className="userInfo h-full flex flex-col justify-center gap-1">
                         <h3 className="text-lg font-semibold text-white">
-                          {selectedChat?.user?.fullName || "Divya Sonar"}
+                          {selectedChat?.user?.fullName || ""}
                           {isOnline && (
                             <p className="text-sm text-[#9D4EDB]">Online</p>
                           )}
@@ -638,70 +692,80 @@ const Dashboard = () => {
                     ref={chatContainerRef}
                     className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 md:px-10 flex-1 overflow-auto hide-scrollbar"
                   >
-                    {Object.entries(groupedMessages).map(
-                      ([dateLabel, msgs]) => {
-                        const minuteGroups = groupByMinute(msgs);
-                        return (
-                          <div key={dateLabel}>
-                            {/* DATE LABEL */}
-                            <div className="flex justify-center my-3">
-                              <span className="bg-[#2F1E3C] text-gray-300 text-xs px-3 py-1 rounded-full">
-                                {dateLabel}
-                              </span>
-                            </div>
+                    {messagesLoading ? (
+                      <div className="flex justify-center items-center h-full">
+                        <h4>Loading Messages....</h4>
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <p className="text-gray-400 text-center mt-4">
+                        No messages yet
+                      </p>
+                    ) : (
+                      Object.entries(groupedMessages).map(
+                        ([dateLabel, msgs]) => {
+                          const minuteGroups = groupByMinute(msgs);
+                          return (
+                            <div key={dateLabel}>
+                              {/* DATE LABEL */}
+                              <div className="flex justify-center my-3">
+                                <span className="bg-[#2F1E3C] text-gray-300 text-xs px-3 py-1 rounded-full">
+                                  {dateLabel}
+                                </span>
+                              </div>
 
-                            {/* MESSAGE GROUPS */}
-                            {minuteGroups.map((group, i) => {
-                              const lastMsg = group[group.length - 1];
+                              {/* MESSAGE GROUPS */}
+                              {minuteGroups.map((group, i) => {
+                                const lastMsg = group[group.length - 1];
 
-                              return (
-                                <div key={i} className="flex flex-col gap-1">
-                                  {group.map((msg, idx) => {
-                                    const isMe =
-                                      msg.sender._id === userData?.userId;
-                                    const isLast = idx === group.length - 1;
-                                    return (
-                                      <>
-                                        <div
-                                          key={msg._id}
-                                          className={`flex flex-col mb-2 ${
-                                            isMe ? "items-end" : "items-start"
-                                          }`}
-                                        >
+                                return (
+                                  <div key={i} className="flex flex-col gap-1">
+                                    {group.map((msg, idx) => {
+                                      const isMe =
+                                        msg.sender._id === userData?.userId;
+                                      const isLast = idx === group.length - 1;
+                                      return (
+                                        <>
                                           <div
-                                            className={`messageBox ${
-                                              isMe
-                                                ? "myMessage"
-                                                : "otherMessage"
+                                            key={msg._id}
+                                            className={`flex flex-col mb-2 ${
+                                              isMe ? "items-end" : "items-start"
                                             }`}
                                           >
-                                            <p className="messageContent">
-                                              {msg.text}
-                                            </p>
-                                          </div>
-                                          {isLast && (
                                             <div
-                                              className={`timebox text-xs mt-1 ${
+                                              className={`messageBox ${
                                                 isMe
-                                                  ? "self-end text-right"
-                                                  : "self-start text-left"
+                                                  ? "myMessage"
+                                                  : "otherMessage"
                                               }`}
                                             >
-                                              {dayjs(lastMsg.createdAt).format(
-                                                "hh:mm A",
-                                              )}
+                                              <p className="messageContent">
+                                                {msg.text}
+                                              </p>
                                             </div>
-                                          )}
-                                        </div>
-                                      </>
-                                    );
-                                  })}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      },
+                                            {isLast && (
+                                              <div
+                                                className={`timebox text-xs mt-1 ${
+                                                  isMe
+                                                    ? "self-end text-right"
+                                                    : "self-start text-left"
+                                                }`}
+                                              >
+                                                {dayjs(
+                                                  lastMsg.createdAt,
+                                                ).format("hh:mm A")}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        },
+                      )
                     )}
                     <div ref={messagesEndRef} />
                   </div>
@@ -791,9 +855,16 @@ const Dashboard = () => {
                       </li>
                       <li
                         className="hover:bg-gray-600 p-2.5 cursor-pointer rounded-xl"
-                        onClick={handleLogout}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLogout();
+                        }}
                       >
-                        Logout
+                        {loading ? (
+                          <PulseLoader size={10} color="#fff" />
+                        ) : (
+                          "Logout"
+                        )}
                       </li>
                     </ul>
                   </div>
@@ -951,7 +1022,7 @@ const Dashboard = () => {
                     </div>
                     <div className="userInfo h-full flex flex-col justify-center gap-1">
                       <h3 className="text-lg font-semibold text-white">
-                        {selectedChat?.user?.fullName || "Divya Sonar"}
+                        {selectedChat?.user?.fullName || ""}
                         {isOnline && (
                           <p className="text-sm text-[#9D4EDB]">Online</p>
                         )}
@@ -966,67 +1037,77 @@ const Dashboard = () => {
                   ref={chatContainerRef}
                   className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 flex-1 overflow-auto hide-scrollbar"
                 >
-                  {Object.entries(groupedMessages).map(([dateLabel, msgs]) => {
-                    const minuteGroups = groupByMinute(msgs);
-                    return (
-                      <div key={dateLabel}>
-                        {/* DATE LABEL */}
-                        <div className="flex justify-center my-3">
-                          <span className="bg-[#2F1E3C] text-gray-300 text-xs px-3 py-1 rounded-full">
-                            {dateLabel}
-                          </span>
-                        </div>
+                  {messagesLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                      <h4>Loading Messages....</h4>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <p className="text-gray-400 text-center mt-4">
+                      No messages yet
+                    </p>
+                  ) : (
+                    Object.entries(groupedMessages).map(([dateLabel, msgs]) => {
+                      const minuteGroups = groupByMinute(msgs);
+                      return (
+                        <div key={dateLabel}>
+                          {/* DATE LABEL */}
+                          <div className="flex justify-center my-3">
+                            <span className="bg-[#2F1E3C] text-gray-300 text-xs px-3 py-1 rounded-full">
+                              {dateLabel}
+                            </span>
+                          </div>
 
-                        {/* MESSAGE GROUPS */}
-                        {minuteGroups.map((group, i) => {
-                          const lastMsg = group[group.length - 1];
+                          {/* MESSAGE GROUPS */}
+                          {minuteGroups.map((group, i) => {
+                            const lastMsg = group[group.length - 1];
 
-                          return (
-                            <div key={i} className="flex flex-col gap-1">
-                              {group.map((msg, idx) => {
-                                const isMe =
-                                  msg.sender._id === userData?.userId;
-                                const isLast = idx === group.length - 1;
-                                return (
-                                  <>
-                                    <div
-                                      key={msg._id}
-                                      className={`flex flex-col mb-2 ${
-                                        isMe ? "items-end" : "items-start"
-                                      }`}
-                                    >
+                            return (
+                              <div key={i} className="flex flex-col gap-1">
+                                {group.map((msg, idx) => {
+                                  const isMe =
+                                    msg.sender._id === userData?.userId;
+                                  const isLast = idx === group.length - 1;
+                                  return (
+                                    <>
                                       <div
-                                        className={`messageBox ${
-                                          isMe ? "myMessage" : "otherMessage"
+                                        key={msg._id}
+                                        className={`flex flex-col mb-2 ${
+                                          isMe ? "items-end" : "items-start"
                                         }`}
                                       >
-                                        <p className="messageContent">
-                                          {msg.text}
-                                        </p>
-                                      </div>
-                                      {isLast && (
                                         <div
-                                          className={`timebox text-xs mt-1 ${
-                                            isMe
-                                              ? "self-end text-right"
-                                              : "self-start text-left"
+                                          className={`messageBox ${
+                                            isMe ? "myMessage" : "otherMessage"
                                           }`}
                                         >
-                                          {dayjs(lastMsg.createdAt).format(
-                                            "hh:mm A",
-                                          )}
+                                          <p className="messageContent">
+                                            {msg.text}
+                                          </p>
                                         </div>
-                                      )}
-                                    </div>
-                                  </>
-                                );
-                              })}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
+                                        {isLast && (
+                                          <div
+                                            className={`timebox text-xs mt-1 ${
+                                              isMe
+                                                ? "self-end text-right"
+                                                : "self-start text-left"
+                                            }`}
+                                          >
+                                            {dayjs(lastMsg.createdAt).format(
+                                              "hh:mm A",
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
                 <div className="inputBox w-full flex items-center justify-between gap-3 py-3 px-4">

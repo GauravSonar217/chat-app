@@ -50,6 +50,11 @@ const initSocket = (server) => {
 
                 const chat = await Chat.findById(chatId);
 
+                if (!chat) {
+                    console.log("❌ Chat not found:", chatId);
+                    return;
+                }
+
                 const socketsInRoom = await io.in(chatId).fetchSockets();
                 const activeUserIds = socketsInRoom.map(s => s.user.id.toString());
 
