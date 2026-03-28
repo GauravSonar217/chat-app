@@ -538,6 +538,14 @@ exports.getProfile = asyncHandler(async (req, res) => {
 // PUT /user/profile
 exports.updateProfile = asyncHandler(async (req, res) => {
 	const userId = req.user.id;
+	
+	if (!userId) {
+		throw new ApiError({
+			statusCode: 401,
+			message: "Unauthorized"
+		});
+	}
+
 	const { fullName, phoneNumber } = req.body;
 
 	const updateData = {
@@ -546,10 +554,17 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 	};
 
 	if (req.file) {
-		updateData.avatar = req.file.path;
+		updateData.avatar = req.file.path || req.file.url;
 	}
 
 	const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+
+	if (!updatedUser) {
+		throw new ApiError({
+			statusCode: 404,
+			message: "User not found"
+		});
+	}
 
 	res.status(200).json(new ApiResponse({
 		message: "Profile updated successfully",
