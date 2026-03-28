@@ -20,27 +20,19 @@ const transporter = nodemailer.createTransport({
  */
 
 async function sendEmail({ to, subject, text, html }) {
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      subject,
+      text,
+      html,
+    });
 
-  const mailOptions = {
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to,
-    subject,
-    text,
-    html,
-  };
-
-  transporter.verify((error, success) => {
-    if (success) {
-      console.log("SMTP Server is ready to take messages");
-    }
-    if (error) {
-      console.log("SMTP ERROR:", error);
-    } else {
-      console.log("SMTP READY");
-    }
-  });
-
-  return transporter.sendMail(mailOptions);
+    console.log("EMAIL SENT:", info.messageId);
+  } catch (error) {
+    console.error("EMAIL ERROR:", error);
+  }
 }
 
 module.exports = sendEmail;
