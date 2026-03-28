@@ -165,20 +165,20 @@ const Register = () => {
                           error={errors.password?.message}
                         />
                         <div
-                          className="absolute top-[1rem] cursor-pointer right-[1rem]"
+                          className="absolute top-[1rem] cursor-pointer right-[0.5rem] md:right-[1rem]"
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? (
                             <img
                               src="/images/svg/eye-off-line.svg"
                               alt=""
-                              width={20}
+                              className="w-5"
                             />
                           ) : (
                             <img
                               src="/images/svg/eye-line.svg"
                               alt=""
-                              width={20}
+                              className="w-5"
                             />
                           )}
                         </div>
@@ -198,20 +198,20 @@ const Register = () => {
                           error={errors.confirmPassword?.message}
                         />
                         <div
-                          className="absolute top-[1rem] cursor-pointer right-[1rem]"
+                          className="absolute top-[1rem] cursor-pointer right-[0.5rem] md:right-[1rem]"
                           onClick={() => setShowConfPassword(!showConfPassword)}
                         >
                           {showConfPassword ? (
                             <img
                               src="/images/svg/eye-off-line.svg"
                               alt=""
-                              width={20}
+                              className="w-5"
                             />
                           ) : (
                             <img
                               src="/images/svg/eye-line.svg"
                               alt=""
-                              width={20}
+                              className="w-5"
                             />
                           )}
                         </div>
@@ -260,7 +260,7 @@ const Register = () => {
               </div>
             </form>
           </div>
-          <div className="imageSec w-1/2 border hidden lg:flex justify-center items-center p-6">
+          <div className="imageSec w-1/2 hidden lg:flex justify-center items-center p-6">
             <img src="/images/png/chatbot.png" alt="" className="h-full" />
           </div>
         </div>
