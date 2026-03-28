@@ -89,6 +89,9 @@ a {
 
 .card-body {
   padding: 2rem;
+  @media (max-width: 768px) {
+    padding: 1rem !important;
+  }
 }
 
 .theme-input {
@@ -156,6 +159,9 @@ a {
 
       @media (max-width: 768px) {
         font-size: 2rem;
+      }
+      @media (max-width: 568px) {
+        font-size: 1.8rem;
       }
     }
   }

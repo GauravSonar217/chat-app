@@ -73,14 +73,18 @@ const Login = () => {
   return (
     <section className="pageContainer">
       <div className="card-body">
-        <div className="flex justify-content-between w-full h-full p-6">
-          <div className="imageSec w-1/2 flex justify-center items-center">
+        <div className="flex justify-between items-center w-full h-full md:p-6">
+          <div className="imageSec hidden lg:flex w-1/2 flex justify-center items-center">
             <img src="/images/png/chatbot.png" alt="" className="h-full" />
           </div>
-          <form action="submit" onSubmit={handleSubmit(onSubmit)}>
-            <div className="formContainer w-1/2 p-5">
-              <div className="bg-[#0C0C1E] bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] w-[500px] h-full p-[1.5px] rounded-xl">
-                <div className="bg-black rounded-xl p-10 h-full">
+          <div className="formContainer w-full lg:w-1/2 flex items-center justify-center  lg:justify-start md:p-5">
+            <form
+              action="submit"
+              className="w-full lg:w-[550px] h-full flex justify-center items-center lg:justify-start"
+              onSubmit={handleSubmit(onSubmit)}
+            >
+              <div className="bg-[#0C0C1E] bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] lg:h-full w-full p-[1.5px] rounded-xl">
+                <div className="bg-black rounded-xl py-10 px-5 md:p-15 lg:p-10 h-full">
                   <h2 className="text-center mb-6">
                     Welcome to{" "}
                     <span className="bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] bg-clip-text text-transparent">
@@ -138,7 +142,7 @@ const Login = () => {
                       </div>
                     </div>
                     <div
-                      className={`flex justify-end items-center text-base ${errors.password?.message ? "mt-[-20px]" : ""} font-semibold mb-3 w-100`}
+                      className={`flex justify-end items-center text-base ${errors.password?.message ? "mt-[-20px]" : ""} font-semibold mb-3 w-full`}
                     >
                       <Link to="/forget-password">Forget password ?</Link>
                     </div>
@@ -179,8 +183,8 @@ const Login = () => {
                   </button>
                 </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </section>

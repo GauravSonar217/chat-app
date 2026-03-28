@@ -131,12 +131,15 @@ const VerifyEmail = () => {
                   {otp.map((digit, index) => (
                     <CustomFormInput
                       type="tel"
+                      maxLength="1"
+                      pattern="[0-9]{1}"
+                      inputMode="numeric"
                       key={index}
                       value={digit}
                       ref={(el) => (inputsRef.current[index] = el)}
                       onChange={(e) => handleChange(e.target.value, index)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
-                      className="text-center h-18 font-bold text-xl"
+                      className="text-center md:h-18 font-bold text-xl"
                     />
                   ))}
                 </div>

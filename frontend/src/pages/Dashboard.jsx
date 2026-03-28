@@ -41,7 +41,7 @@ const Dashboard = () => {
   const [hasMoreChats, setHasMoreChats] = useState(true);
   const [hasMoreUsers, setHasMoreUsers] = useState(true);
   const onlineUsersSet = new Set(onlineUsers);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 770);
   const isOnline = onlineUsersSet.has(selectedChat?.user?._id);
   const selectedChatRef = useRef(null);
 
@@ -458,7 +458,7 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-              <div className="searchBarCont border border-gray-600 bg-[#202020] rounded-xl px-4 mt-3 flex items-center gap-1">
+              <div className="searchBarCont  border-gray-600 bg-[#202020] rounded-xl px-4 mt-3 flex items-center gap-1">
                 <img src="/images/png/search.png" alt="" className="w-5 h-5" />
                 <input
                   type="text"
@@ -477,7 +477,7 @@ const Dashboard = () => {
                     {chatList.map((chat) => (
                       <div
                         key={chat._id}
-                        className="chatBox p-2 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
+                        className="chatBox p-2 px-4 flex items-start gap-3 hover:bg-[#2F1E3C] rounded-xl cursor-pointer"
                         onClick={() => handleSelectChat(chat)}
                       >
                         <div className="profileBox w-15 h-15 rounded-full overflow-hidden">
@@ -597,14 +597,18 @@ const Dashboard = () => {
           )}
 
           {selectedChat && (
-            <div className="chatArea mobileFull w-full h-full">
+            <div className="chatArea mobileFull border w-full h-full">
               {selectedChat && (
                 <div className="chatCont border-s border-gray-600 w-full h-full flex flex-col">
                   <div className="chatHeader w-full flex items-center justify-between border-b border-gray-600 p-3 px-6">
                     <div className="flex items-center gap-3">
                       {isMobile && (
                         <button onClick={() => setSelectedChat(null)}>
-                          <img src="/images/png/back.png" className="w-5 cursor-pointer" alt="" />
+                          <img
+                            src="/images/png/back.png"
+                            className="w-5 cursor-pointer"
+                            alt=""
+                          />
                         </button>
                       )}
                       <div className="profileBox relative w-15 h-15 rounded-full">
@@ -632,7 +636,7 @@ const Dashboard = () => {
                   </div>
                   <div
                     ref={chatContainerRef}
-                    className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 flex-1 overflow-auto hide-scrollbar"
+                    className="chatBox w-full h-full flex flex-col gap-2 p-3 px-6 md:px-10 flex-1 overflow-auto hide-scrollbar"
                   >
                     {Object.entries(groupedMessages).map(
                       ([dateLabel, msgs]) => {
@@ -701,7 +705,7 @@ const Dashboard = () => {
                     )}
                     <div ref={messagesEndRef} />
                   </div>
-                  <div className="inputBox w-full flex items-center justify-between gap-3 py-3 px-6">
+                  <div className="inputBox w-full flex items-center justify-between gap-2 md:gap-3 py-3 px-3 md:px-6">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -713,7 +717,7 @@ const Dashboard = () => {
                     </button>
                     {showEmoji && (
                       <div
-                        className="absolute bottom-16 left-35 z-50"
+                        className="absolute bottom-20 left-5 z-50"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <EmojiPicker
@@ -725,8 +729,8 @@ const Dashboard = () => {
                     <CustomFormInput
                       type="text"
                       placeholder="Type a message"
-                      className="w-ful rounded-lg"
-                      parentClass="w-full"
+                      className="w-full rounded-lg border"
+                      parentClass="flex-1"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyDown={(e) => {
@@ -738,13 +742,12 @@ const Dashboard = () => {
                     />
                     <button
                       onClick={handleSendMessage}
-                      className="cursor-pointer bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] w-12 h-12 rounded-full flex items-center justify-center"
+                      className="cursor-pointer bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] w-10 h-10 md:w-15 md:h-15 rounded-full flex items-center justify-center"
                     >
                       <img
                         src="/images/png/send.png"
                         alt=""
-                        width={20}
-                        height={20}
+                        className="w-4 h-4 md:w-7 md:h-7"
                       />
                     </button>
                   </div>
@@ -1026,7 +1029,7 @@ const Dashboard = () => {
                   })}
                   <div ref={messagesEndRef} />
                 </div>
-                <div className="inputBox w-full flex items-center justify-between gap-3 py-3 px-6">
+                <div className="inputBox border w-full flex items-center justify-between gap-3 py-3 px-4">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1038,7 +1041,7 @@ const Dashboard = () => {
                   </button>
                   {showEmoji && (
                     <div
-                      className="absolute bottom-16 left-35 z-50"
+                      className="absolute bottom-16 left-50 z-50"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <EmojiPicker
@@ -1050,8 +1053,8 @@ const Dashboard = () => {
                   <CustomFormInput
                     type="text"
                     placeholder="Type a message"
-                    className="w-ful rounded-lg"
-                    parentClass="w-full"
+                    className="rounded-lg"
+                    parentClass="flex-1"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyDown={(e) => {

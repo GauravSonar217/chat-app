@@ -129,16 +129,19 @@ const VerifyOtp = () => {
                   {otp.map((digit, index) => (
                     <CustomFormInput
                       type="tel"
+                      maxLength="1"
+                      pattern="[0-9]{1}"
+                      inputMode="numeric"
                       key={index}
                       value={digit}
                       ref={(el) => (inputsRef.current[index] = el)}
                       onChange={(e) => handleChange(e.target.value, index)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
-                      className="text-center h-18 font-bold text-xl"
+                      className="text-center md:h-18 font-bold text-xl"
                     />
                   ))}
                 </div>
-                <div className=" flex justify-end items-center">
+                <div className="flex justify-end items-center">
                   {!isExpired ? (
                     <h5 className="text-sm text-gray-400 mt-2">
                       OTP will be expired in{" "}

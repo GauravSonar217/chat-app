@@ -77,14 +77,14 @@ const Register = () => {
     <section className="pageContainer">
       <div className="card-body">
         <div className="flex justify-content-between w-full h-full">
-          <form
-            action="submit"
-            className="w-1/2 flex items-center justify-center"
-            onSubmit={handleSubmit(onSubmit)}
-          >
-            <div className="formContainer w-full h-full flex justify-end items-center">
-              <div className="bg-[#0C0C1E] bg-gradient-to-b from-[#2E105B] to-[#9D4EDB]  w-[550px] p-[1.5px] rounded-xl">
-                <div className="bg-black rounded-xl py-8 px-10">
+          <div className="formContainer w-full lg:w-1/2 h-full flex justify-end items-center">
+            <form
+              action="submit"
+              className="w-full flex items-center justify-center lg:justify-end"
+              onSubmit={handleSubmit(onSubmit)}
+            >
+              <div className="bg-[#0C0C1E] bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] w-full  lg:w-[550px] p-[1.5px] rounded-xl">
+                <div className="bg-black rounded-xl py-10 px-5 md:p-15 lg:p-10">
                   <h2 className="text-center mb-6">
                     Sign up{" "}
                     <span className="bg-gradient-to-b from-[#2E105B] to-[#9D4EDB] bg-clip-text text-transparent">
@@ -120,6 +120,7 @@ const Register = () => {
                         name="email"
                         className=""
                         placeholder="Enter email"
+                        parentClass="w-full"
                         {...register("email", {
                           required: "Email is required",
                           pattern: {
@@ -134,6 +135,7 @@ const Register = () => {
                         label="Phone Number"
                         name="phoneNumber"
                         placeholder="Enter phone number"
+                        parentClass="w-full"
                         {...register("phoneNumber", {
                           required: "Phone number is required",
                           pattern: {
@@ -145,12 +147,13 @@ const Register = () => {
                       />
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="relative">
+                      <div className="relative w-full">
                         <CustomFormInput
                           type={showPassword ? "text" : "password"}
                           label="Password"
                           name="password"
                           placeholder="Enter password"
+                          parentClass="w-full"
                           {...register("password", {
                             required: "Password is required",
                             minLength: {
@@ -180,12 +183,13 @@ const Register = () => {
                           )}
                         </div>
                       </div>
-                      <div className="relative">
+                      <div className="relative w-full">
                         <CustomFormInput
                           type={showConfPassword ? "text" : "password"}
                           label="Confirm Password"
-                          placeholder="Confirm Password"
                           name="confirmPassword"
+                          placeholder="Confirm Password"
+                          parentClass="w-full"
                           {...register("confirmPassword", {
                             required: "Please confirm your password",
                             validate: (value) =>
@@ -254,9 +258,9 @@ const Register = () => {
                   </button>
                 </div>
               </div>
-            </div>
-          </form>
-          <div className="imageSec w-1/2 flex justify-center items-center p-6">
+            </form>
+          </div>
+          <div className="imageSec w-1/2 border hidden lg:flex justify-center items-center p-6">
             <img src="/images/png/chatbot.png" alt="" className="h-full" />
           </div>
         </div>
