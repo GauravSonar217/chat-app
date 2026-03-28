@@ -53,7 +53,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 	await newUser.save();
 
 	try {
-		await sendEmail({
+		sendEmail({
 			to: email,
 			subject: 'Verify your email',
 			text: `Your verification code is: ${otp}`,
