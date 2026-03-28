@@ -729,7 +729,7 @@ const Dashboard = () => {
                     <CustomFormInput
                       type="text"
                       placeholder="Type a message"
-                      className="w-full rounded-lg border"
+                      className="w-full rounded-lg"
                       parentClass="flex-1"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
@@ -1029,7 +1029,7 @@ const Dashboard = () => {
                   })}
                   <div ref={messagesEndRef} />
                 </div>
-                <div className="inputBox border w-full flex items-center justify-between gap-3 py-3 px-4">
+                <div className="inputBox w-full flex items-center justify-between gap-3 py-3 px-4">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
