@@ -597,7 +597,7 @@ const Dashboard = () => {
           )}
 
           {selectedChat && (
-            <div className="chatArea mobileFull border w-full h-full">
+            <div className="chatArea mobileFull w-full h-full">
               {selectedChat && (
                 <div className="chatCont border-s border-gray-600 w-full h-full flex flex-col">
                   <div className="chatHeader w-full flex items-center justify-between border-b border-gray-600 p-3 px-6">
