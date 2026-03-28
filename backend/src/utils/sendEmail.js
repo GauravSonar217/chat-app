@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === 'true', 
+  secure: process.env.SMTP_SECURE === 'true',
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -20,6 +20,7 @@ const transporter = nodemailer.createTransport({
  */
 
 async function sendEmail({ to, subject, text, html }) {
+
   const mailOptions = {
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to,
@@ -27,6 +28,18 @@ async function sendEmail({ to, subject, text, html }) {
     text,
     html,
   };
+
+  transporter.verify((error, success) => {
+    if (success) {
+      console.log("SMTP Server is ready to take messages");
+    }
+    if (error) {
+      console.log("SMTP ERROR:", error);
+    } else {
+      console.log("SMTP READY");
+    }
+  });
+
   return transporter.sendMail(mailOptions);
 }
 
