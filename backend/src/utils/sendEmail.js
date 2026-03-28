@@ -30,6 +30,7 @@ async function sendEmail({ to, subject, text, html }) {
     });
 
     console.log("EMAIL SENT:", info.messageId);
+    console.log("Sending email to:", to);
   } catch (error) {
     console.error("EMAIL ERROR:", error);
   }

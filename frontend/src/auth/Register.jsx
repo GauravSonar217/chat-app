@@ -47,7 +47,7 @@ const Register = () => {
           role: res.data.role,
         };
         encryptAndStoreLocal("userData", { userData: userData });
-        navigate("/verify-email");
+        navigate("/");
       },
       (err) => {},
     );
